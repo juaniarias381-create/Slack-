@@ -1,5 +1,7 @@
 import connectMongoDB from "./config/mongo.config.js";
 import { testMysqlConnection } from "./config/mysql.config.js";
+import dns from "node:dns";
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 connectMongoDB()
 /* testMysqlConnection() */
@@ -18,7 +20,7 @@ import user_repository from "./repositories/user.repository.js";
 import cors from 'cors'
 
 
-const PORT = 8080
+const PORT = ENVIRONMENT.PORT
 
 const app = express()
 
@@ -27,9 +29,7 @@ app.use(cors())
 app.use(express.json())
 
 
-/* 
-Todas las consultas que lleguen a /api/auth las manejara el auth_router
-*/
+
 app.use('/api/auth', auth_router)
 app.use('/api/users', user_router)
 app.use('/api/workspaces', workspace_router)
@@ -52,21 +52,3 @@ app.listen(
 )
 
 
-/* mailer_transporter.sendMail(
-    {
-        to: "mati.dev.gimenez@gmail.com",
-        from: ENVIRONMENT.GMAIL_USER,
-        subject: 'Mail de prueba',
-        html: `
-        <body>
-            <h1>Esto es un mail de prueba</h1>
-        </body>
-        `
-    }
-) */
-
-/* user_repository.create('test-1', 'test-1@gmail.com', 'test123') */
-
-//user_repository.get()
-
-/* user_repository.getById(3) */

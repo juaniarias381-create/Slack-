@@ -21,7 +21,7 @@ class UserRepository {
         
         //- pool.execute sanitiza los valores a inyectar en la query 
         //- devuelve un array con [resultado, tablas]
-       
+    
         const [result] = await pool.execute(
             query_sql,
             [
