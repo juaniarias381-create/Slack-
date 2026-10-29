@@ -1,14 +1,14 @@
 import Member from "../models/member.model.js"
 
 class MemberRepository {
-    async create(userId, workspaceId, role, invitacion_aceptada = true) {
-    return await Member.create({
-        fk_id_usuario: userId,
-        fk_id_espacio_trabajo: workspaceId,
-        rol: role,
-        invitacion_aceptada: invitacion_aceptada
-    })
-}
+    async create(userId, workspaceId, role) {
+        return await Member.create({
+            fk_id_usuario: userId,
+            fk_id_espacio_trabajo: workspaceId,
+            rol: role,
+            active: true
+        })
+    }
 
     async deleteById(memberId) {
         const result = await Member.findByIdAndDelete(memberId)
@@ -19,14 +19,6 @@ class MemberRepository {
         const result = await Member.findByIdAndUpdate(memberId, { rol: role })
         console.log(result)
     }
-
-    async getById(member_id) {
-    return await Member.findById(member_id)
-}
-
-async acceptInvitationById(member_id) {
-    await Member.findByIdAndUpdate(member_id, { invitacion_aceptada: true })
-}
 
 
     /* 
@@ -44,7 +36,7 @@ async acceptInvitationById(member_id) {
         //Traer todas las membresias de un usuario
         const result = await Member
         .find({fk_id_usuario: user_id})
-        .select('rol fecha_creacion fk_id_espacio_trabajo')
+        .select('role fecha_creacion fk_id_espacio_trabajo')
         .populate(
             'fk_id_espacio_trabajo',
             'nombre fecha_creacion'
@@ -64,24 +56,12 @@ async acceptInvitationById(member_id) {
     }
 
     //Traer todos miembros de un espacio de trabajo
-    async getAllMembershipsByWorkspaceId(workspace_id) {
-    const result = await Member
-        .find({ fk_id_espacio_trabajo: workspace_id })
+    async getAllMembershipsByWorkspaceId(workspace_id){
+        const result = await Member
+        .find({fk_id_espacio_trabajo: workspace_id})
         .populate('fk_id_usuario', 'nombre email')
-
-    return result.map(
-        membership => {
-            return {
-                member_id: membership._id,
-                member_rol: membership.rol,
-                invitacion_aceptada: membership.invitacion_aceptada,
-                user_id: membership.fk_id_usuario._id,
-                user_nombre: membership.fk_id_usuario.nombre,
-                user_email: membership.fk_id_usuario.email
-            }
-        }
-    )
-}
+        console.log(result)
+    }
 
     async getMembershipByUserAndWorkspace (user_id, workspace_id){
         return await Member.findOne({fk_id_usuario:user_id, fk_id_espacio_trabajo: workspace_id })
