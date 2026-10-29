@@ -5,7 +5,7 @@ import { WORKSPACE_COLLECTION_NAME } from './workspace.model.js'
 
 const member_schema = new mongoose.Schema(
     {
-        fk_id_usuario: {
+        fk_id_usuario:{
             type: mongoose.Schema.Types.ObjectId,
             required: true,
             ref: USER_COLLECTION_NAME /* La coleccion a la que hacemos referencia */
@@ -20,13 +20,13 @@ const member_schema = new mongoose.Schema(
             enum: ['user', 'admin', 'owner'],
             default: 'user'
         },
-        invitacion_aceptada: {          // <-- NUEVO
-            type: Boolean,
-            default: true
-        },
         fecha_creacion: {
             type: Date,
             default: Date.now
+        },
+        activo: {
+            type: mongoose.Schema.Types.Boolean,
+            default: false
         }
     }
 )

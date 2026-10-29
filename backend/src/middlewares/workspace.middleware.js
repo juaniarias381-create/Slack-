@@ -32,7 +32,7 @@ function workspaceMiddleware(valid_roles) {
 
         if(!membership){
             throw new ServerError(
-                'no eres miembro de este espacio de trabajo ',
+                'No eres miembro de este espacio de trabajo',
                 403
             )
         }
