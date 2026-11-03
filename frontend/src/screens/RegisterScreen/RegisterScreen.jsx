@@ -5,5 +5,4 @@ function RegisterScreen() {
     <div>RegisterScreen</div>
   )
 }
-
 export default RegisterScreen
