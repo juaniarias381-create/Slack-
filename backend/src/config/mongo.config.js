@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import ENVIRONMENT from "./environment.config.js";
-
+import dns from "node:dns";
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
 let connectionPromise = null;
 
 async function connectMongoDB() {
