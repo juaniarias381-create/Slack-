@@ -67,5 +67,4 @@ function RegisterScreen() {
         </div>
     )
 }
-
 export default RegisterScreen
