@@ -1,9 +1,15 @@
 import { useContext } from 'react'
-import { Link } from 'react-router'
 import { WorkspaceContext } from '../../Context/WorkspaceContext'
+import ChannelList from '../../Components/ChannelList/ChannelList'
+import { Link, Outlet } from 'react-router'
 
 export default function WorkspaceScreen() {
-    const { workspace_response, workspace_error, workspace_loading } = useContext(WorkspaceContext)
+    const {
+        workspace_response,
+        workspace_error,
+        workspace_loading,
+        members_response
+    } = useContext(WorkspaceContext)
 
     if (workspace_loading || (!workspace_response && !workspace_error)) {
         return <span>Cargando...</span>
@@ -18,9 +24,18 @@ export default function WorkspaceScreen() {
         )
     }
 
-    return (
+    const workspace = workspace_response.data.workspace_selected
+    const members_count = members_response?.data?.members?.length
+
+return (
+    <div>
+        <h1>{workspace.nombre}</h1>
+        {members_count !== undefined && <span>{members_count} miembros</span>}
         <div>
-            <h1>{workspace_response.data.workspace_selected.nombre}</h1>
+            <ChannelList />
+            <button>Add member</button>
         </div>
-    )
+        <Outlet />
+    </div>
+)
 }

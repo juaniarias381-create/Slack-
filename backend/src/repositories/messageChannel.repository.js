@@ -21,8 +21,17 @@ class MessageChannelRepository {
     }
 
     async getAllMessagesByChannelId(channel_id) {
-        const result = await MessageChannel.find({ fk_id_canal: channel_id })
-        console.log(result)
+        const result = await MessageChannel
+            .find({ fk_id_canal: channel_id })
+            .sort({ fecha_creacion: 1 })
+            .populate({
+                path: 'fk_id_emisor',
+                select: 'rol fk_id_usuario',
+                populate: {
+                    path: 'fk_id_usuario',
+                    select: 'nombre'
+                }
+            })
         return result
     }
 

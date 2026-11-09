@@ -6,32 +6,45 @@ import RegisterScreen from './screens/RegisterScreen/RegisterScreen'
 import AuthMiddleware from './Middlewares/AuthMiddleware'
 import WorkspaceScreen from './screens/WorkspaceScreen/WorkspaceScreen'
 import WorkspaceContextProvider from './Context/WorkspaceContext'
+import ChannelContextProvider from './Context/ChannelContext'
+import Channel from './Components/Channel/Channel'
+
+
 
 const App = () => {
   return (
     <Routes>
-      <Route element={<AuthMiddleware/>}>
+      <Route element={<AuthMiddleware />}>
 
-        <Route 
-          path='/' 
-          element={<HomeScreeen/>}
-        />
-        <Route 
-          path='/home' 
-          element={<HomeScreeen/>}
+        <Route
+          path='/'
+          element={<HomeScreeen />}
         />
         <Route
-    path='/workspace/:workspace_id'
-    element={
-        <WorkspaceContextProvider>
-            <WorkspaceScreen/>
-        </WorkspaceContextProvider>
-    }
-/>
+          path='/home'
+          element={<HomeScreeen />}
+        />
+        <Route
+          path='/workspace/:workspace_id'
+          element={
+            <WorkspaceContextProvider>
+              <WorkspaceScreen />
+            </WorkspaceContextProvider>
+          }
+        >
+          <Route
+            path='channel/:channel_id'
+            element={
+              <ChannelContextProvider>
+                <Channel />
+              </ChannelContextProvider>
+            }
+          />
+        </Route>
 
       </Route>
-      <Route path='/login' element={<LoginScreen/>}/>
-      <Route path='/register' element={<RegisterScreen/>} />
+      <Route path='/login' element={<LoginScreen />} />
+      <Route path='/register' element={<RegisterScreen />} />
     </Routes>
   )
 }

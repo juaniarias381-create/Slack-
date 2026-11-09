@@ -31,6 +31,9 @@ class ChannelRepository {
         const result = await Channel.find({ fk_id_espacio_trabajo: workspace_id })
         return result
     }
+    async getById(channel_id) {
+    return await Channel.findById(channel_id)
+}
 }
 const channel_repository = new ChannelRepository()
 export default channel_repository
