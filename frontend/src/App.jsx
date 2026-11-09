@@ -4,6 +4,8 @@ import HomeScreeen from './screens/HomeScreen/HomeScreeen'
 import LoginScreen from './screens/LoginScreen/LoginScreen'
 import RegisterScreen from './screens/RegisterScreen/RegisterScreen'
 import AuthMiddleware from './Middlewares/AuthMiddleware'
+import WorkspaceScreen from './screens/WorkspaceScreen/WorkspaceScreen'
+import WorkspaceContextProvider from './Context/WorkspaceContext'
 
 const App = () => {
   return (
@@ -18,6 +20,14 @@ const App = () => {
           path='/home' 
           element={<HomeScreeen/>}
         />
+        <Route
+    path='/workspace/:workspace_id'
+    element={
+        <WorkspaceContextProvider>
+            <WorkspaceScreen/>
+        </WorkspaceContextProvider>
+    }
+/>
 
       </Route>
       <Route path='/login' element={<LoginScreen/>}/>
