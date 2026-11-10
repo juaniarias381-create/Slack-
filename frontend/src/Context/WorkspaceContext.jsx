@@ -1,11 +1,8 @@
-import { createContext, useEffect } from 'react'
+import { createContext } from 'react'
 import { useParams } from 'react-router'
-import useRequest from '../hooks/useRequest'
-import {
-    getWorkspaceById,
-    getChannelsByWorkspaceId,
-    getMembersByWorkspaceId
-} from '../services/workspaceService'
+import useWorkspace from '../hooks/useWorkspace'
+import useChannelsList from '../hooks/useChannelsList'
+import useMemberList from '../hooks/useMemberList'
 
 export const WorkspaceContext = createContext({
     workspace_response: null,
@@ -23,47 +20,16 @@ export const WorkspaceContext = createContext({
 export default function WorkspaceContextProvider({ children }) {
     const { workspace_id } = useParams()
 
-    /* 
-    useRequest maneja el estado de UNA sola consulta, por eso usamos uno por cada endpoint
-    */
-    const workspace_request = useRequest()
-    const channels_request = useRequest()
-    const members_request = useRequest()
-
-    function reloadChannels() {
-        channels_request.sendRequest(
-            () => getChannelsByWorkspaceId(workspace_id)
-        )
-    }
-
-    useEffect(
-        () => {
-            workspace_request.sendRequest(
-                () => getWorkspaceById(workspace_id)
-            )
-            channels_request.sendRequest(
-                () => getChannelsByWorkspaceId(workspace_id)
-            )
-            members_request.sendRequest(
-                () => getMembersByWorkspaceId(workspace_id)
-            )
-        },
-        [workspace_id]
-    )
+    const workspace = useWorkspace(workspace_id)
+    const channels = useChannelsList(workspace_id)
+    const members = useMemberList(workspace_id)
 
     return (
         <WorkspaceContext.Provider
             value={{
-                workspace_response: workspace_request.response,
-                workspace_error: workspace_request.error,
-                workspace_loading: workspace_request.loading,
-                channels_response: channels_request.response,
-                channels_error: channels_request.error,
-                channels_loading: channels_request.loading,
-                reloadChannels,
-                members_response: members_request.response,
-                members_error: members_request.error,
-                members_loading: members_request.loading
+                ...workspace,
+                ...channels,
+                ...members
             }}
         >
             {children}
