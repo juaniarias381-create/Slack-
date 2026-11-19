@@ -14,6 +14,26 @@ si hay mas miembros solo se muestra el conteo
 */
 const MAX_MEMBER_CHIPS = 4
 
+/*
+Footer de links, compartido por el estado vacio y la lista con datos
+*/
+function WorkspaceListFooter() {
+    return (
+        <footer className='workspace-list__footer'>
+            <Link to='/workspaces/new' className='workspace-list__link'>
+                Create a new workspace
+            </Link>
+
+            <span className='workspace-list__footer-hint'>
+                Not seeing your workspace?{' '}
+                <Link to='/login' className='workspace-list__link'>
+                    Try a different email
+                </Link>
+            </span>
+        </footer>
+    )
+}
+
 export default function WorkspaceList() {
 
     const {
@@ -43,7 +63,12 @@ export default function WorkspaceList() {
         )
     }
     else if (workspaces_response.data.workspaces.length === 0) {
-        return <p className='workspace-list__empty'>Aún no creaste ningún espacio de trabajo</p>
+        return (
+            <div className='workspace-list'>
+                <p className='workspace-list__empty'>Aún no creaste ningún espacio de trabajo</p>
+                <WorkspaceListFooter />
+            </div>
+        )
     }
 
     const workspaces = workspaces_response.data.workspaces
@@ -98,18 +123,7 @@ export default function WorkspaceList() {
                 ))}
             </div>
 
-            <footer className='workspace-list__footer'>
-                <Link to='/workspaces/new' className='workspace-list__link'>
-                    Create a new workspace
-                </Link>
-
-                <span className='workspace-list__footer-hint'>
-                    Not seeing your workspace?{' '}
-                    <Link to='/login' className='workspace-list__link'>
-                        Try a different email
-                    </Link>
-                </span>
-            </footer>
+            <WorkspaceListFooter />
         </div>
     )
 }
