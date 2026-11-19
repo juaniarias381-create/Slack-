@@ -70,6 +70,76 @@ class MemberRepository {
     }
 
 
+    /*
+    Traer todos los espacios de trabajo de un usuario, y para cada espacio de trabajo
+    la lista completa de sus miembros con su nombre y rol
+
+    formato:
+        [
+            {
+                _id,
+                nombre,
+                fecha_creacion,
+                members: [
+                    {
+                        member_id,
+                        nombre, (nombre del usuario miembro)
+                        rol
+                    }
+                ]
+            }
+        ]
+    */
+    async getAllWorkspacesWithMembersByUserId(user_id) {
+        //1. Buscar las membresias del usuario para saber a que espacios de trabajo pertenece
+        const user_memberships = await Member
+            .find({ fk_id_usuario: user_id })
+            .select('fk_id_espacio_trabajo')
+
+        //Descartamos membresias huerfanas (espacio de trabajo eliminado)
+        const workspace_ids = user_memberships
+            .map(membership => membership.fk_id_espacio_trabajo)
+            .filter(workspace_id => workspace_id)
+
+        //2. Traer TODAS las membresias de esos espacios de trabajo, con el usuario poblado
+        const all_memberships = await Member
+            .find({ fk_id_espacio_trabajo: { $in: workspace_ids } })
+            .populate('fk_id_usuario', 'nombre email')
+            .populate('fk_id_espacio_trabajo', 'nombre fecha_creacion')
+
+        //3. Agrupar las membresias por espacio de trabajo
+        const workspaces_map = new Map()
+
+        for (const membership of all_memberships) {
+            const workspace = membership.fk_id_espacio_trabajo
+            if (!workspace) {
+                continue
+            }
+
+            const workspace_key = workspace._id.toString()
+
+            if (!workspaces_map.has(workspace_key)) {
+                workspaces_map.set(workspace_key, {
+                    _id: workspace._id,
+                    nombre: workspace.nombre,
+                    fecha_creacion: workspace.fecha_creacion,
+                    members: []
+                })
+            }
+
+            workspaces_map.get(workspace_key).members.push(
+                {
+                    member_id: membership._id,
+                    nombre: membership.fk_id_usuario?.nombre,
+                    rol: membership.rol
+                }
+            )
+        }
+
+        return [...workspaces_map.values()]
+    }
+
+
     //Borrar las membresias de un espacio de trabajo
     async deleteAllMembershipsByWorkspaceId(workspace_id) {
         await Member.deleteMany({ fk_id_espacio_trabajo: workspace_id })

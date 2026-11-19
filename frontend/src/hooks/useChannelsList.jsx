@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import useRequest from './useRequest'
-import { getChannelsByWorkspaceId } from '../services/workspaceService'
+import { getChannelsByWorkspaceId } from '../services/channelService'
 
 export default function useChannelsList(workspace_id) {
     const { response, error, loading, sendRequest } = useRequest()

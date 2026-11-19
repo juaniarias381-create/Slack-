@@ -15,4 +15,5 @@ export default function AuthMiddleware() {
     else{
         return <Navigate to={'/login'}/>
     }
+   
 }

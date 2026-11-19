@@ -1,0 +1,49 @@
+/*
+  Layout de la pantalla de inicio (estilo Slack):
+  banda superior aubergine y tarjeta blanca superpuesta con la lista de workspaces
+*/
+
+/* Banda superior morada */
+.home-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 28px 64px;
+  background-color: var(--brand);
+  color: #FFFFFF;
+}
+
+.home-header__icon {
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.home-header__title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+/* Contenedor de la tarjeta: se superpone a la banda con margen negativo */
+.home-main {
+  max-width: 820px;
+  margin: -44px auto 48px;
+  padding: 0 16px;
+}
+
+.home-card {
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .home-header {
+    padding: 16px 20px 56px;
+  }
+
+  .home-main {
+    margin-top: -36px;
+  }
+}

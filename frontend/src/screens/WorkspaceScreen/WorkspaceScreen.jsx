@@ -1,41 +1,36 @@
-import { useContext } from 'react'
+import { useContext, useEffect } from 'react'
 import { WorkspaceContext } from '../../Context/WorkspaceContext'
-import ChannelList from '../../Components/ChannelList/ChannelList'
-import { Link, Outlet } from 'react-router'
 
 export default function WorkspaceScreen() {
     const {
         workspace_response,
         workspace_error,
         workspace_loading,
-        members_response
+        members_response,
+        members_error,
+        members_loading
     } = useContext(WorkspaceContext)
 
-    if (workspace_loading || (!workspace_response && !workspace_error)) {
-        return <span>Cargando...</span>
-    }
+    useEffect(() => {
+        console.log('[Workspace] loading:', workspace_loading)
+        console.log('[Workspace] response:', workspace_response)
+        console.log('[Workspace] error:', workspace_error)
 
-    if (workspace_error) {
-        return (
-            <div>
-                <span className='error-text'>Error: {workspace_error}</span>
-                <Link to='/home'>Volver al inicio</Link>
-            </div>
-        )
-    }
+        console.log('[Members] loading:', members_loading)
+        console.log('[Members] response:', members_response)
+        console.log('[Members] error:', members_error)
+    }, [
+        workspace_loading,
+        workspace_response,
+        workspace_error,
+        members_loading,
+        members_response,
+        members_error
+    ])
 
-    const workspace = workspace_response.data.workspace_selected
-    const members_count = members_response?.data?.members?.length
-
-return (
-    <div>
-        <h1>{workspace.nombre}</h1>
-        {members_count !== undefined && <span>{members_count} miembros</span>}
+    return (
         <div>
-            <ChannelList />
-            <button>Add member</button>
+            {/* Por ahora vacia */}
         </div>
-        <Outlet />
-    </div>
-)
+    )
 }

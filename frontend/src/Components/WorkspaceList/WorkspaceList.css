@@ -1,0 +1,178 @@
+/*
+  Lista de espacios de trabajo estilo Slack (variables globales de globals.css).
+  Se renderiza dentro de .home-card (ver HomeScreen.css)
+*/
+
+/* Estados de carga, error y vacio */
+.workspace-list__status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 20px 24px;
+}
+
+.workspace-list__empty {
+  padding: 24px;
+  color: var(--text-muted);
+}
+
+/* Tabs (solo "Workspaces", activa por ahora) */
+.workspace-list__tabs {
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.workspace-list__tab {
+  display: inline-block;
+  padding: 14px 2px 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.workspace-list__tab--active {
+  color: var(--ink-strong);
+  border-bottom: 3px solid var(--brand);
+  margin-bottom: -1px;
+}
+
+/* Filas de espacios de trabajo */
+.workspace-list__rows {
+  padding: 8px 16px;
+}
+
+/* Etiqueta de seccion sobre el listado (como "Ready to launch" en Slack) */
+.workspace-list__section-label {
+  padding: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.workspace-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 8px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--ink);
+  transition: background-color 0.15s ease-out;
+}
+
+.workspace-row:hover {
+  background-color: var(--brand-soft);
+}
+
+.workspace-row__avatar {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.workspace-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.workspace-row__name {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-row__members {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* Chips de miembros: iniciales con colores rotativos (paleta Slack) */
+.workspace-row__chips {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.member-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  color: #FFFFFF;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.member-chip:nth-child(4n + 1) {
+  background-color: #E8912D;
+}
+
+.member-chip:nth-child(4n + 2) {
+  background-color: #2BAC76;
+}
+
+.member-chip:nth-child(4n + 3) {
+  background-color: #1264A3;
+}
+
+.member-chip:nth-child(4n + 4) {
+  background-color: #E01E5A;
+}
+
+.workspace-row__count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Flecha de la derecha */
+.workspace-row__arrow {
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  color: var(--ink-strong);
+  transition: transform 0.15s ease-out, color 0.15s ease-out;
+}
+
+.workspace-row:hover .workspace-row__arrow {
+  transform: translateX(4px);
+  color: var(--brand);
+}
+
+/* Footer con los links */
+.workspace-list__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.workspace-list__link {
+  color: var(--info-color);
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+a.workspace-list__link:hover {
+  text-decoration: underline;
+}
+
+/* Link muerto: se ve como link pero no es clickeable */
+span.workspace-list__link {
+  cursor: default;
+}
+
+.workspace-list__footer-hint {
+  font-size: 0.95rem;
+  color: var(--ink-strong);
+}
