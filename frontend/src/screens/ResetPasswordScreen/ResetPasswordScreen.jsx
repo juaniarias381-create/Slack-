@@ -1,8 +1,11 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import useForm from '../../hooks/useForm'
 import useRequest from '../../hooks/useRequest'
 import { resetPassword } from '../../services/authService'
+import TextField from '../../Components/Form/TextField'
+import FormButton from '../../Components/Form/FormButton'
+import Alert from '../../Components/Alert/Alert'
 
 /*
 Esta screen recibe el reset_token que llega por querystring (el link del email
@@ -20,6 +23,7 @@ function ResetPasswordScreen() {
     const initial_state = {password: '', confirmPassword: ''}
     const {formState, handleChangeInput} = useForm(initial_state)
     const {loading, response, error, sendRequest} = useRequest()
+    const [clientError, setClientError] = useState(null)
     const navigate = useNavigate()
 
     async function handleSubmit (event){
@@ -27,10 +31,10 @@ function ResetPasswordScreen() {
 
         //Validamos en el cliente que las dos contraseñas coincidan
         if(formState.password !== formState.confirmPassword){
-            console.error('Las contraseñas no coinciden')
-            alert('Las contraseñas no coinciden') //por ahora avisamos asi hasta decidir como mostramos errores del cliente
+            setClientError('Las contraseñas no coinciden')
             return
         }
+        setClientError(null)
 
         sendRequest(
             () => resetPassword(reset_token, formState.password)
@@ -58,64 +62,92 @@ function ResetPasswordScreen() {
 
     if(!reset_token){
         return (
-            <div>
-                <h1>Restablecer contraseña</h1>
-                <p style={{color: 'red'}}>No se encontro el token de restablecimiento en el link</p>
-                <p>
-                    Volve al <Link to='/forgot-password'>olvide mi contraseña</Link> para pedir un link nuevo
-                </p>
+            <div className='form-screen'>
+                <div className='form-card'>
+                    <img
+                        className='form-logo'
+                        alt='Slack'
+                        height='26'
+                        title='Slack'
+                        src='https://a.slack-edge.com/bv1-13/slack_logo-97f7334.svg'
+                    />
+                    <h1 className='form-title form-title--wrap'>Restablecer contraseña</h1>
+                    <p className='form-subtitle'>
+                        El link que usaste no es válido o está incompleto
+                    </p>
+                    <div className='form-stack'>
+                        <Alert type='error'>
+                            No se encontró el token de restablecimiento en el link
+                        </Alert>
+                    </div>
+                    <p className='form-footer'>
+                        Volvé a <Link to='/forgot-password'>olvidé mi contraseña</Link> para pedir un link nuevo
+                    </p>
+                </div>
             </div>
         )
     }
 
     return (
-        <div>
-            <h1>Restablecer contraseña</h1>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="password">Nueva contraseña:</label>
-                    <input 
-                        name='password' 
-                        id='password' 
-                        type='password' 
-                        value={formState.password} 
-                        onChange={handleChangeInput} 
+        <div className='form-screen'>
+            <div className='form-card'>
+                <img
+                    className='form-logo'
+                    alt='Slack'
+                    height='26'
+                    title='Slack'
+                    src='https://a.slack-edge.com/bv1-13/slack_logo-97f7334.svg'
+                />
+                <h1 className='form-title form-title--wrap'>Restablecer contraseña</h1>
+                <p className='form-subtitle'>
+                    Elegí una nueva contraseña para tu cuenta
+                </p>
+                <form className='form-stack' onSubmit={handleSubmit}>
+                    <TextField
+                        name='password'
+                        label='Nueva contraseña:'
+                        type='password'
+                        value={formState.password}
+                        onChange={handleChangeInput}
+                        autoComplete='new-password'
                     />
-                </div>
-                <div>
-                    <label htmlFor="confirmPassword">Confirmar contraseña:</label>
-                    <input 
-                        name='confirmPassword' 
-                        id='confirmPassword' 
-                        type='password' 
-                        value={formState.confirmPassword} 
-                        onChange={handleChangeInput} 
+                    <TextField
+                        name='confirmPassword'
+                        label='Confirmar contraseña:'
+                        type='password'
+                        value={formState.confirmPassword}
+                        onChange={handleChangeInput}
+                        autoComplete='new-password'
                     />
-                </div>
-
-                {
-                    error
-                    &&
-                    !loading
-                    &&
-                    <span style={{color: 'red'}}>{error}</span>
-                }
-
-                {
-                    response
-                    && response.ok
-                    && !loading
-                    && <span style={{color: 'green'}}>
-                        {response.message} - Te redirigiremos al login en unos segundos...
-                    </span>
-                }
-
-                {
-                    loading
-                    ? <button type='submit' disabled={true} >Cargando...</button>
-                    : <button type='submit'>Restablecer contraseña</button>
-                }
-            </form>
+                    {
+                        clientError
+                        &&
+                        <Alert type='error'>{clientError}</Alert>
+                    }
+                    {
+                        error
+                        &&
+                        !loading
+                        &&
+                        <Alert type='error'>{error}</Alert>
+                    }
+                    <FormButton loading={loading} loadingText='Restableciendo…'>
+                        Restablecer contraseña
+                    </FormButton>
+                    {
+                        response
+                        && response.ok
+                        && !loading
+                        &&
+                        <Alert type='success'>
+                            {response.message} - Te redirigiremos al login en unos segundos...
+                        </Alert>
+                    }
+                </form>
+                <p className='form-footer'>
+                    ¿Ya tenés cuenta? <Link to='/login'>Iniciá sesión</Link>
+                </p>
+            </div>
         </div>
     )
 }

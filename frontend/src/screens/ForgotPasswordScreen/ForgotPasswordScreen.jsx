@@ -1,8 +1,11 @@
 import React from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import useForm from '../../hooks/useForm'
 import useRequest from '../../hooks/useRequest'
 import { forgotPassword } from '../../services/authService'
+import TextField from '../../Components/Form/TextField'
+import FormButton from '../../Components/Form/FormButton'
+import Alert from '../../Components/Alert/Alert'
 
 /*
 Esta screen es el "olvide mi contraseña": se ingresa el email y se consulta el
@@ -18,7 +21,6 @@ function ForgotPasswordScreen() {
     const initial_state = {email: ''}
     const {formState, handleChangeInput} = useForm(initial_state)
     const {loading, response, error, sendRequest} = useRequest()
-    const navigate = useNavigate()
 
     async function handleSubmit (event){
         event.preventDefault()
@@ -29,62 +31,63 @@ function ForgotPasswordScreen() {
     }
 
     return (
-        <div>
-            <h1>Olvide mi contraseña</h1>
-            <p>Ingresá tu email y te enviaremos un link para restablecer tu contraseña</p>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="email">Email:</label>
-                    <input 
-                        name='email' 
-                        id='email' 
-                        type='email' 
-                        value={formState.email} 
-                        onChange={handleChangeInput} 
+        <div className='form-screen'>
+            <div className='form-card'>
+                <img
+                    className='form-logo'
+                    alt='Slack'
+                    height='26'
+                    title='Slack'
+                    src='https://a.slack-edge.com/bv1-13/slack_logo-97f7334.svg'
+                />
+                <h1 className='form-title form-title--wrap'>Olvidé mi contraseña</h1>
+                <p className='form-subtitle'>
+                    Ingresá tu email y te enviaremos un link para restablecer tu contraseña
+                </p>
+                <form className='form-stack' onSubmit={handleSubmit}>
+                    <TextField
+                        name='email'
+                        label='Email:'
+                        type='email'
+                        value={formState.email}
+                        onChange={handleChangeInput}
+                        autoComplete='email'
                     />
-                </div>
-
-                {
-                    error
-                    &&
-                    !loading
-                    &&
-                    <span style={{color: 'red'}}>{error}</span>
-                }
-
-                {
-                    response
-                    && response.ok
-                    && !loading
-                    && <span style={{color: 'green'}}>
-                        {response.message} - Revisa tu casilla y hace click en el link del mail
-                    </span>
-                }
-
-                {
-                    loading
-                    ? <button type='submit' disabled={true} >Cargando...</button>
-                    : <button type='submit'>Enviar mail</button>
-                }
-
+                    {
+                        error
+                        &&
+                        !loading
+                        &&
+                        <Alert type='error'>{error}</Alert>
+                    }
+                    <FormButton loading={loading} loadingText='Enviando mail…'>
+                        Enviar mail
+                    </FormButton>
+                    {
+                        response
+                        && response.ok
+                        && !loading
+                        &&
+                        <Alert type='success'>
+                            {response.message} - Revisá tu casilla y hacé click en el link del mail
+                        </Alert>
+                    }
+                </form>
                 {
                     /*
                     Si el mail salio bien, dejamos ir al login
                     */
                     response
+                    && response.ok
                     && !loading
-                    &&
-                    <p>
-                        <button type='button' onClick={() => navigate('/login')}>
-                            Ir al login
-                        </button>
-                    </p>
+                    ? <p className='form-footer'>
+                        <Link to='/login'>Ir al inicio de sesión</Link>
+                      </p>
+                    : <p className='form-footer'>
+                        ¿Ya tenés cuenta? <Link to='/login'>Iniciá sesión</Link>
+                      </p>
                 }
-            </form>
-
-            <p>
-                Ya tienes cuenta? <Link to='/login'>Iniciar sesion</Link>
-            </p>
+            </div>
         </div>
     )
 }
