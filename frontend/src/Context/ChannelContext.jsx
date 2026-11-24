@@ -1,52 +1,136 @@
-import { createContext, useEffect } from 'react'
+import { createContext, useCallback, useContext, useEffect } from 'react'
 import { useParams } from 'react-router'
 import useRequest from '../hooks/useRequest'
-import { getChannelById, getMessagesByChannelId } from '../services/channelService'
+import {
+    getChannelById,
+    getMessagesByChannelId,
+    sendMessage as sendMessageRequest
+} from '../services/channelService'
 
-export const ChannelContext = createContext({
+/*
+  ChannelContext
+
+  Todo lo que pasa DENTRO de un canal: sus datos, sus mensajes y el envio de
+  nuevos mensajes. Se monta en las rutas del workspace y lee workspace_id y
+  channel_id de la URL (useParams).
+
+  Analogia: el WorkspaceContext es el edificio y este es el salon elegido.
+  Cuando cambias de salon, se vacia el anterior y se carga el nuevo.
+*/
+
+const defaultValue = {
     channel_response: null,
     channel_error: null,
     channel_loading: false,
+    reloadChannel: () => {},
     messages_response: null,
     messages_error: null,
     messages_loading: false,
-    reloadMessages: () => {}
-})
+    reloadMessages: () => {},
+    sendMessage: () => {}
+}
+
+export const ChannelContext = createContext(defaultValue)
+
+export const useChannelContext = () => useContext(ChannelContext)
 
 export default function ChannelContextProvider({ children }) {
     const { workspace_id, channel_id } = useParams()
 
-    const channel_request = useRequest()
-    const messages_request = useRequest()
+    const {
+        response: channel_response,
+        error: channel_error,
+        loading: channel_loading,
+        sendRequest: sendChannelRequest,
+        reset: resetChannel
+    } = useRequest()
 
-    function reloadMessages() {
-        messages_request.sendRequest(
-            () => getMessagesByChannelId(workspace_id, channel_id)
-        )
-    }
+    const {
+        response: messages_response,
+        error: messages_error,
+        loading: messages_loading,
+        sendRequest: sendMessagesRequest,
+        reset: resetMessages
+    } = useRequest()
 
-    useEffect(
+    const reloadChannel = useCallback(
         () => {
-            channel_request.sendRequest(
+            if (!workspace_id || !channel_id) {
+                return
+            }
+            return sendChannelRequest(
                 () => getChannelById(workspace_id, channel_id)
             )
-            messages_request.sendRequest(
+        },
+        [channel_id, sendChannelRequest, workspace_id]
+    )
+
+    const reloadMessages = useCallback(
+        () => {
+            if (!workspace_id || !channel_id) {
+                return
+            }
+            return sendMessagesRequest(
                 () => getMessagesByChannelId(workspace_id, channel_id)
             )
         },
-        [workspace_id, channel_id]
+        [channel_id, sendMessagesRequest, workspace_id]
     )
+
+    useEffect(
+        () => {
+            if (!workspace_id || !channel_id) {
+                resetChannel()
+                resetMessages()
+                return
+            }
+
+            reloadChannel()
+            reloadMessages()
+        },
+        [
+            channel_id,
+            workspace_id,
+            reloadChannel,
+            reloadMessages,
+            resetChannel,
+            resetMessages
+        ]
+    )
+
+    /*
+    Enviar no actualiza el estado "a mano": primero guarda en el backend y
+    despues pide un GET de mensajes. Asi el emisor y el orden siempre vienen del
+    servidor, que es la fuente de la verdad.
+    */
+    async function handleSendMessage(content) {
+        if (!workspace_id || !channel_id) {
+            throw new Error('No hay un canal seleccionado')
+        }
+
+        const result = await sendMessageRequest(
+            workspace_id,
+            channel_id,
+            content
+        )
+
+        await reloadMessages()
+
+        return result
+    }
 
     return (
         <ChannelContext.Provider
             value={{
-                channel_response: channel_request.response,
-                channel_error: channel_request.error,
-                channel_loading: channel_request.loading,
-                messages_response: messages_request.response,
-                messages_error: messages_request.error,
-                messages_loading: messages_request.loading,
-                reloadMessages
+                channel_response,
+                channel_error,
+                channel_loading,
+                reloadChannel,
+                messages_response,
+                messages_error,
+                messages_loading,
+                reloadMessages,
+                sendMessage: handleSendMessage
             }}
         >
             {children}

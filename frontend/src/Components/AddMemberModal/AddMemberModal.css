@@ -1,0 +1,63 @@
+/*
+  Formulario del modal "Agregar miembro".
+  Reutiliza las clases de Form.css (campos y boton primario) y solo
+  agrega el layout y el boton secundario de cancelar.
+*/
+
+.add-member-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.add-member-modal__hint {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.add-member-modal__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.add-member-modal__actions .form-btn {
+  flex: 1;
+}
+
+.add-member-modal__cancel {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-strong);
+  background-color: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+.add-member-modal__cancel:hover:not(:disabled) {
+  background-color: var(--brand-soft);
+  border-color: var(--border-strong);
+}
+
+.add-member-modal__cancel:focus-visible {
+  outline: 3px solid var(--brand-soft);
+  outline-offset: 2px;
+}
+
+.add-member-modal__cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 420px) {
+  .add-member-modal__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}

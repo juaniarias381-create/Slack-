@@ -409,6 +409,12 @@ export default {
             ok: { type: 'boolean', example: true },
             status: { type: 'integer', example: 201 },
             message: { type: 'string', example: 'Mensaje enviado correctamente' },
+            data: {
+                type: 'object',
+                properties: {
+                    message_created: { $ref: '#/components/schemas/Message' },
+                },
+            },
         },
     },
 }

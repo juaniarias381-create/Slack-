@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import member_repository from "../repositories/member.repository.js"
 import workspace_repository from "../repositories/workspace.repository.js"
 import ServerError from "../utils/error.util.js"
@@ -18,10 +19,19 @@ function workspaceMiddleware(valid_roles) {
         (request, response, next) {
 
         const { workspace_id } = request.params
-        const workspace_selected = await workspace_repository.getById(workspace_id)
 
-        const membership = await member_repository.getMembershipByUserAndWorkspace(request.user.id, workspace_id)
-        console.log('[WorkspaceMiddleware]:', membership, workspace_id, request.user)
+        /*
+        Si el id no es un ObjectId valido, Mongoose lanzaria un CastError
+        y el cliente recibiria un 500. Lo convertimos en un 400 claro.
+        */
+        if (!mongoose.isValidObjectId(workspace_id)) {
+            throw new ServerError(
+                'El id del workspace no es valido',
+                400
+            )
+        }
+
+        const workspace_selected = await workspace_repository.getById(workspace_id)
 
         if (!workspace_selected) {
             throw new ServerError(
@@ -30,7 +40,9 @@ function workspaceMiddleware(valid_roles) {
             )
         }
 
-        if(!membership){
+        const membership = await member_repository.getMembershipByUserAndWorkspace(request.user.id, workspace_id)
+
+        if (!membership){
             throw new ServerError(
                 'No eres miembro de este espacio de trabajo',
                 403
@@ -44,12 +56,11 @@ function workspaceMiddleware(valid_roles) {
             )
         }
         request.workspace = workspace_selected
+        request.membership = membership
         next()
     }
 
 }
-
-
 
 
 export default workspaceMiddleware

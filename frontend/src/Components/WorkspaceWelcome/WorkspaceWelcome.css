@@ -1,0 +1,68 @@
+/*
+  Pantalla de bienvenida del workspace (cuando no hay canal seleccionado).
+*/
+
+.workspace-welcome {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+}
+
+.workspace-welcome__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  background-color: var(--brand);
+  border-radius: 18px;
+}
+
+.workspace-welcome__title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--ink-strong);
+}
+
+.workspace-welcome__description {
+  max-width: 640px;
+  margin-top: 10px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.workspace-welcome__description--muted {
+  font-style: italic;
+}
+
+.workspace-welcome__meta {
+  margin-top: 18px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.workspace-welcome__hint {
+  margin-top: 28px;
+  padding: 16px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  background-color: #FAF9FB;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 600px) {
+  .workspace-welcome {
+    padding: 32px 20px 48px;
+  }
+
+  .workspace-welcome__title {
+    font-size: 1.5rem;
+  }
+}

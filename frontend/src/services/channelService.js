@@ -1,55 +1,40 @@
-const API_URL = import.meta.env.VITE_APP_URL_BACKEND
+import apiRequest from './apiRequest'
 
-export async function getChannelsByWorkspaceId(workspace_id){
-    const auth_token = localStorage.getItem('auth_token')
-    const response_http = await fetch(
-        API_URL + '/api/workspaces/' + workspace_id + '/channels',
-        {
-            method: 'GET',
-            headers: {
-                'Authorization': `bearer ${auth_token}`
-            }
-        }
-    )
-    const response_body = await response_http.json()
-    if(!response_body.ok){
-        throw new Error(response_body.message)
-    }
-    return response_body
+/*
+Services de canales y mensajes. Todos los paths son relativos al workspace,
+porque en el backend el router de canales esta montado dentro de /workspaces.
+*/
+
+export async function getChannelsByWorkspaceId(workspace_id) {
+    return await apiRequest(`/api/workspaces/${workspace_id}/channels`)
 }
 
-export async function getChannelById(workspace_id, channel_id){
-    const auth_token = localStorage.getItem('auth_token')
-    const response_http = await fetch(
-        API_URL + '/api/workspaces/' + workspace_id + '/channels/' + channel_id,
+export async function createChannel(workspace_id, name, description) {
+    return await apiRequest(
+        `/api/workspaces/${workspace_id}/channels`,
         {
-            method: 'GET',
-            headers: {
-                'Authorization': `bearer ${auth_token}`
-            }
+            method: 'POST',
+            body: { name, description }
         }
     )
-    const response_body = await response_http.json()
-    if(!response_body.ok){
-        throw new Error(response_body.message)
-    }
-    return response_body
 }
 
-export async function getMessagesByChannelId(workspace_id, channel_id){
-    const auth_token = localStorage.getItem('auth_token')
-    const response_http = await fetch(
-        API_URL + '/api/workspaces/' + workspace_id + '/channels/' + channel_id + '/messages',
+export async function getChannelById(workspace_id, channel_id) {
+    return await apiRequest(`/api/workspaces/${workspace_id}/channels/${channel_id}`)
+}
+
+export async function getMessagesByChannelId(workspace_id, channel_id) {
+    return await apiRequest(
+        `/api/workspaces/${workspace_id}/channels/${channel_id}/messages`
+    )
+}
+
+export async function sendMessage(workspace_id, channel_id, content) {
+    return await apiRequest(
+        `/api/workspaces/${workspace_id}/channels/${channel_id}/messages`,
         {
-            method: 'GET',
-            headers: {
-                'Authorization': `bearer ${auth_token}`
-            }
+            method: 'POST',
+            body: { content }
         }
     )
-    const response_body = await response_http.json()
-    if(!response_body.ok){
-        throw new Error(response_body.message)
-    }
-    return response_body
 }

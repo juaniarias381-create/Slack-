@@ -1,0 +1,110 @@
+/*
+  Estilos compartidos por los formularios de modales (crear canal,
+  agregar miembro, editar workspace, eliminar workspace).
+  Reutiliza las clases de Form.css para campos y boton primario.
+*/
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-form__hint {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.modal-form__warning {
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--error-ink);
+  background-color: var(--error-bg);
+  border: 1px solid rgba(224, 30, 90, 0.35);
+  border-radius: var(--radius-sm);
+}
+
+.modal-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-form__actions .form-btn {
+  flex: 1;
+}
+
+.modal-form__cancel {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-strong);
+  background-color: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+.modal-form__cancel:hover:not(:disabled) {
+  background-color: var(--brand-soft);
+  border-color: var(--border-strong);
+}
+
+.modal-form__cancel:focus-visible {
+  outline: 3px solid var(--brand-soft);
+  outline-offset: 2px;
+}
+
+.modal-form__cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal-form__danger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  background-color: var(--error-color);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease-out, transform 0.05s ease;
+}
+
+.modal-form__danger:hover:not(:disabled) {
+  background-color: #B81749;
+}
+
+.modal-form__danger:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.modal-form__danger:focus-visible {
+  outline: 3px solid rgba(224, 30, 90, 0.35);
+  outline-offset: 2px;
+}
+
+.modal-form__danger:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+@media (max-width: 420px) {
+  .modal-form__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}

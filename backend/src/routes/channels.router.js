@@ -6,6 +6,7 @@ import channel_repository from '../repositories/channel.repository.js'
 import member_repository from '../repositories/member.repository.js'
 import message_channel_repository from '../repositories/messageChannel.repository.js'
 import ServerError from '../utils/error.util.js'
+import { normalizeText } from '../utils/validation.util.js'
 
 const channel_router = express.Router({ mergeParams: true })
 
@@ -27,7 +28,7 @@ GET /api/workspaces/:workspace_id/channels
  *       Errores posibles:
  *       - 404 "Workspace no encontrado" si el id no existe
  *       - 403 "No eres miembro de este espacio de trabajo" si no tiene membresia
- *       - 500 si el id no es un ObjectId valido de MongoDB (CastError de Mongoose)
+ *       - 400 si el id no es un ObjectId valido de MongoDB
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -126,6 +127,7 @@ Solo owner y admin
  *       - "El nombre del canal es requerido" si falta el nombre o esta vacio
  *       - "El nombre del canal no puede superar los 30 caracteres"
  *       - "El id del canal no es valido" (ObjectId invalido, viene del middleware)
+ *       - 409 "Ya existe un canal con ese nombre en este espacio de trabajo"
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -208,6 +210,16 @@ Solo owner y admin
  *               ok: false
  *               status: 404
  *               message: "Workspace no encontrado"
+ *       409:
+ *         description: Ya existe un canal con ese nombre en el workspace.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorEnvelope'
+ *             example:
+ *               ok: false
+ *               status: 409
+ *               message: "Ya existe un canal con ese nombre en este espacio de trabajo"
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  *       503:
@@ -220,16 +232,49 @@ channel_router.post(
     async (request, response) => {
         const { name, description } = request.body
 
-        if (!name || typeof name !== 'string' || name.trim().length === 0) {
-            throw new ServerError('El nombre del canal es requerido', 400)
-        }
-        if (name.trim().length > 30) {
-            throw new ServerError('El nombre del canal no puede superar los 30 caracteres', 400)
+        /*
+        Normalizamos antes de mirar la base: el nombre llega sin espacios
+        sobrantes y sin caracteres de control. Lo que valida el front es solo
+        comodidad; la regla real vive aca.
+        */
+        const normalized_name = normalizeText(
+            name,
+            {
+                field: 'El nombre del canal',
+                required: true,
+                max_length: 30
+            }
+        )
+
+        const normalized_description = normalizeText(
+            description,
+            {
+                field: 'La descripcion del canal',
+                max_length: 1000,
+                allow_newlines: true
+            }
+        )
+
+        /*
+        Chequeo explicito de duplicado para devolver un 409 claro. El indice
+        unico del schema sigue siendo la red de seguridad para requests
+        simultaneos.
+        */
+        const existing_channel = await channel_repository.getByNameInWorkspace(
+            request.workspace._id,
+            normalized_name
+        )
+
+        if (existing_channel) {
+            throw new ServerError(
+                'Ya existe un canal con ese nombre en este espacio de trabajo',
+                409
+            )
         }
 
         const channel_created = await channel_repository.createChannel(
-            name.trim(),
-            description,
+            normalized_name,
+            normalized_description,
             request.workspace._id
         )
 
@@ -507,7 +552,7 @@ Para poder crear mensajes de prueba (despues lo usamos desde el front)
  *                 example: "Hola equipo, este es el primer mensaje"
  *     responses:
  *       201:
- *         description: Mensaje enviado correctamente (no devuelve el mensaje creado).
+ *         description: Mensaje enviado correctamente (devuelve el mensaje creado con su autor).
  *         content:
  *           application/json:
  *             schema:
@@ -516,6 +561,19 @@ Para poder crear mensajes de prueba (despues lo usamos desde el front)
  *               ok: true
  *               status: 201
  *               message: "Mensaje enviado correctamente"
+ *               data:
+ *                 message_created:
+ *                   _id: "674a1b2c3d4e5f6a7b8c9d0b"
+ *                   contenido: "Hola equipo"
+ *                   fk_id_emisor:
+ *                     _id: "674a1b2c3d4e5f6a7b8c9d0f"
+ *                     rol: "owner"
+ *                     fk_id_usuario:
+ *                       _id: "674a1b2c3d4e5f6a7b8c9d11"
+ *                       nombre: "Ana"
+ *                   fk_id_canal: "674a1b2c3d4e5f6a7b8c9d0c"
+ *                   fecha_creacion: "2026-01-15T10:35:00.000Z"
+ *                   editado: false
  *       400:
  *         description: Contenido invalido, ObjectId invalido o header Authorization invalido.
  *         content:
@@ -571,30 +629,40 @@ channel_router.post(
     workspaceMiddleware([]),
     channelMiddleware,
     async (request, response) => {
-        const { content } = request.body
-
-        if (!content || typeof content !== 'string' || content.trim().length === 0) {
-            throw new ServerError('El contenido del mensaje es requerido', 400)
-        }
-        if (content.length > 2000) {
-            throw new ServerError('El mensaje no puede superar los 2000 caracteres', 400)
-        }
-
-        const membership = await member_repository.getMembershipByUserAndWorkspace(
-            request.user.id,
-            request.workspace._id
+        const normalized_content = normalizeText(
+            request.body.content,
+            {
+                field: 'El contenido del mensaje',
+                required: true,
+                max_length: 2000,
+                allow_newlines: true,
+                long_message: 'El mensaje no puede superar los 2000 caracteres'
+            }
         )
 
-        await message_channel_repository.create(
-            content.trim(),
+        /*
+        workspaceMiddleware ya garantiza que el usuario es miembro, pero
+        necesitamos LA membresia (su _id) para saber quien escribio el mensaje.
+        */
+        const membership = request.membership
+
+        const message_created = await message_channel_repository.create(
+            normalized_content,
             membership._id,
             request.channel._id
         )
 
+        // Devolvemos el mensaje para que el front pueda agregarlo sin recargar.
+        // El populate es el mismo que usa GET /messages.
+        const message_with_author = await message_channel_repository.getById(message_created._id)
+
         return response.status(201).send({
             ok: true,
             status: 201,
-            message: 'Mensaje enviado correctamente'
+            message: 'Mensaje enviado correctamente',
+            data: {
+                message_created: message_with_author
+            }
         })
     }
 )

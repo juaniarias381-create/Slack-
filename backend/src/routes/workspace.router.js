@@ -8,14 +8,15 @@ import {
     getWorkspaceById,
     getWorkspaceMembers,
     deleteWorkspace,
-    updateWorkspace
+    updateWorkspace,
+    createWorkspaceMember
 } from '../controllers/workspace.controller.js'
 
 const workspace_router = express.Router()
 
 
 /*
-(Authentified) GET /api/workspace
+(Authentified) GET /api/workspaces
     Traer la lista de espacios de trabajo asocidadas a ese usuario (basicamente sus membresias), con el rol de membresia en cada espacio de trabajo
 */
 /**
@@ -77,6 +78,7 @@ workspace_router.get(
     getUserWorkspaces
 )
 
+
 /**
  * @openapi
  * /api/workspaces:
@@ -129,14 +131,6 @@ workspace_router.get(
  *                   description: "Workspace del equipo de frontend"
  *                   fecha_creacion: "2026-01-15T10:30:00.000Z"
  *                   __v: 0
- *                 owner_membership:
- *                   _id: "674a1b2c3d4e5f6a7b8c9d0f"
- *                   fk_id_usuario: "674a1b2c3d4e5f6a7b8c9d11"
- *                   fk_id_espacio_trabajo: "674a1b2c3d4e5f6a7b8c9d0e"
- *                   rol: "owner"
- *                   fecha_creacion: "2026-01-15T10:30:00.000Z"
- *                   activo: true
- *                   __v: 0
  *       400:
  *         description: Header Authorization faltante o malformado.
  *         content:
@@ -161,9 +155,10 @@ workspace_router.post(
     createWorkspace
 )
 
+
 /**
  * @openapi
- * /api/workspaces/{workspace_id}:
+ * /api/workspaces/:workspace_id:
  *   get:
  *     tags: [Workspaces]
  *     summary: Obtiene el detalle de un workspace
@@ -175,7 +170,7 @@ workspace_router.post(
  *       Errores posibles:
  *       - 404 "Workspace no encontrado" si el id no existe
  *       - 403 "No eres miembro de este espacio de trabajo" si no tiene membresia
- *       - 500 si el id no es un ObjectId valido de MongoDB (CastError de Mongoose)
+ *       - 400 si el id no es un ObjectId valido de MongoDB
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -197,7 +192,7 @@ workspace_router.post(
  *                   nombre: "Equipo Frontend"
  *                   description: "Workspace del equipo de frontend"
  *                   fecha_creacion: "2026-01-15T10:30:00.000Z"
- *                   __v: 0
+ *                   my_role: "owner"
  *       400:
  *         description: Header Authorization faltante o malformado.
  *         content:
@@ -242,6 +237,7 @@ workspace_router.get(
     getWorkspaceById
 )
 
+
 /*
 (Todos los miembros) GET /api/workspaces/:workspace_id/members
     Traer la lista de miembros del espacio de trabajo
@@ -249,7 +245,7 @@ workspace_router.get(
 
 /**
  * @openapi
- * /api/workspaces/{workspace_id}/members:
+ * /api/workspaces/:workspace_id/members:
  *   get:
  *     tags: [Workspaces]
  *     summary: Lista los miembros de un workspace
@@ -262,7 +258,7 @@ workspace_router.get(
  *       Errores posibles:
  *       - 404 "Workspace no encontrado" si el id no existe
  *       - 403 "No eres miembro de este espacio de trabajo" si no tiene membresia
- *       - 500 si el id no es un ObjectId valido de MongoDB (CastError de Mongoose)
+ *       - 400 si el id no es un ObjectId valido de MongoDB
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -332,9 +328,138 @@ workspace_router.get(
     getWorkspaceMembers
 )
 
+
 /**
  * @openapi
- * /api/workspaces/{workspace_id}:
+ * /api/workspaces/:workspace_id/members:
+ *   post:
+ *     tags: [Workspaces]
+ *     summary: Agrega un miembro a un workspace (solo owner)
+ *     description: |
+ *       Crea una membresia para el usuario cuyo email se indica en "email".
+ *
+ *       Reglas de permisos segun el rol de quien agrega:
+ *       - "owner" puede crear membresias con rol "admin" o "user"
+ *       - Cualquier otro rol devuelve 403.
+ *
+ *       Requiere header "Authorization: Bearer <jwt>" y rol "owner".
+ *
+ *       Errores posibles:
+ *       - 400 "email es un campo requerido"
+ *       - 403 si el rol solicitado no esta permitido para quien agrega o si se intenta crear un owner
+ *       - 404 "No existe un usuario con ese email"
+ *       - 409 "El usuario ya tiene una membresia en este espacio de trabajo"
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/WorkspaceId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, rol]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email del usuario que se quiere agregar (debe existir)
+ *                 example: "luis@example.com"
+ *               rol:
+ *                 type: string
+ *                 enum: [user, admin]
+ *                 description: Rol de la membresia a crear (nunca "owner")
+ *                 example: "user"
+ *     responses:
+ *       201:
+ *         description: Membresia creada correctamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MemberCreatedResponse'
+ *             example:
+ *               ok: true
+ *               status: 201
+ *               message: "Miembro agregado correctamente"
+ *               data:
+ *                 membership_created:
+ *                   _id: "674a1b2c3d4e5f6a7b8c9d0f"
+ *                   fk_id_usuario: "674a1b2c3d4e5f6a7b8c9d11"
+ *                   fk_id_espacio_trabajo: "674a1b2c3d4e5f6a7b8c9d0e"
+ *                   rol: "user"
+ *                   fecha_creacion: "2026-01-15T10:30:00.000Z"
+ *                   __v: 0
+ *       400:
+ *         description: Falta email o el header Authorization es invalido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorEnvelope'
+ *             examples:
+ *               email_faltante:
+ *                 summary: Falta email
+ *                 value: { ok: false, status: 400, message: "email es un campo requerido" }
+ *               header_faltante:
+ *                 summary: Sin header Authorization
+ *                 value: { ok: false, status: 400, message: "Auth header is requered" }
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         description: Sin membresia, rol insuficiente de quien agrega, o rol solicitado no permitido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorEnvelope'
+ *             examples:
+ *               sin_membresia:
+ *                 summary: No es miembro del workspace
+ *                 value: { ok: false, status: 403, message: "No eres miembro de este espacio de trabajo" }
+ *               rol_insuficiente:
+ *                 summary: Quien agrega tiene rol "user"
+ *                 value: { ok: false, status: 403, message: "No tienes permisos suficientes para hacer esta operacion" }
+ *               rol_no_permitido:
+ *                 summary: Un admin intenta crear un admin, o cualquiera intenta crear un owner
+ *                 value: { ok: false, status: 403, message: "No tienes permisos para crear una membresia con ese rol" }
+ *       404:
+ *         description: Workspace inexistente o ningun usuario con ese email.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorEnvelope'
+ *             examples:
+ *               workspace_inexistente:
+ *                 summary: Workspace inexistente
+ *                 value: { ok: false, status: 404, message: "Workspace no encontrado" }
+ *               email_inexistente:
+ *                 summary: Ningun usuario con ese email
+ *                 value: { ok: false, status: 404, message: "No existe un usuario con ese email" }
+ *       409:
+ *         description: El usuario ya tiene una membresia en el workspace.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorEnvelope'
+ *             example:
+ *               ok: false
+ *               status: 409
+ *               message: "El usuario ya es miembro de este espacio de trabajo"
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ *       503:
+ *         $ref: '#/components/responses/ServiceUnavailable'
+ */
+workspace_router.post(
+    '/:workspace_id/members',
+    authMiddleware,
+    workspaceMiddleware(['owner']),
+    createWorkspaceMember
+)
+
+
+/**
+ * @openapi
+ * /api/workspaces/:workspace_id:
  *   delete:
  *     tags: [Workspaces]
  *     summary: Elimina un workspace (solo owner)
@@ -347,7 +472,7 @@ workspace_router.get(
  *       Errores posibles:
  *       - 404 "Workspace no encontrado" si el id no existe
  *       - 403 si no es miembro o su rol no es "owner"
- *       - 500 si el id no es un ObjectId valido de MongoDB (CastError de Mongoose)
+ *       - 400 si el id no es un ObjectId valido de MongoDB
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -369,7 +494,6 @@ workspace_router.get(
  *                   nombre: "Equipo Frontend"
  *                   description: "Workspace del equipo de frontend"
  *                   fecha_creacion: "2026-01-15T10:30:00.000Z"
- *                   __v: 0
  *       400:
  *         description: Header Authorization faltante o malformado.
  *         content:
@@ -417,23 +541,24 @@ workspace_router.delete(
     deleteWorkspace
 )
 
+
 /**
  * @openapi
- * /api/workspaces/{workspace_id}:
+ * /api/workspaces/:workspace_id:
  *   put:
  *     tags: [Workspaces]
- *     summary: Actualiza nombre y descripcion de un workspace (owner o admin)
+ *     summary: Actualiza nombre y descripcion de un workspace (solo owner)
  *     description: |
  *       Actualiza el nombre y la descripcion del espacio de trabajo.
- *       Ambos campos son obligatorios.
+ *       El nombre es obligatorio; la descripcion es opcional.
  *
- *       Requiere header "Authorization: Bearer <jwt>" y rol "owner" o "admin".
+ *       Requiere header "Authorization: Bearer <jwt>" y rol "owner".
  *
  *       Errores posibles:
  *       - 400 "name y description son campos requeridos" si falta alguno
  *       - 404 "Workspace no encontrado" si el id no existe
- *       - 403 si no es miembro o su rol no es "owner"/"admin"
- *       - 500 si el id no es un ObjectId valido de MongoDB (CastError de Mongoose)
+ *       - 403 si no es miembro o su rol no es "owner"
+ *       - 400 si el id no es un ObjectId valido de MongoDB
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -444,7 +569,7 @@ workspace_router.delete(
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, description]
+ *             required: [name]
  *             properties:
  *               name:
  *                 type: string
@@ -454,6 +579,7 @@ workspace_router.delete(
  *               description:
  *                 type: string
  *                 maxLength: 200
+ *                 description: Nueva descripcion del workspace
  *                 example: "Nueva descripcion del workspace"
  *     responses:
  *       200:
@@ -472,7 +598,6 @@ workspace_router.delete(
  *                   nombre: "Equipo Frontend v2"
  *                   description: "Nueva descripcion del workspace"
  *                   fecha_creacion: "2026-01-15T10:30:00.000Z"
- *                   __v: 0
  *       400:
  *         description: Campos requeridos faltantes o header Authorization invalido.
  *         content:
@@ -489,7 +614,7 @@ workspace_router.delete(
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  *       403:
- *         description: Sin membresia o rol distinto de "owner"/"admin".
+ *         description: Sin membresia o rol distinto de "owner".
  *         content:
  *           application/json:
  *             schema:
@@ -519,7 +644,7 @@ workspace_router.delete(
 workspace_router.put(
     '/:workspace_id',
     authMiddleware,
-    workspaceMiddleware(['owner', 'admin']),
+    workspaceMiddleware(['owner']),
     updateWorkspace
 )
 
@@ -528,8 +653,9 @@ workspace_router.put(
 Crear los endpoints
 
 EJERCITACION PARA AHORA
+
 - (owner) DELETE /api/workspace/:workspace_id => Elimina espacio de trabajo (HECHO)
-- (owner, admin) PUT /api/workspace/:workspace_id => Actualizar nombre/descripcion del espacio de trabajo
+- (owner) PUT /api/workspaces/:workspace_id => Actualizar nombre/descripcion del espacio de trabajo
 
 Tarea:
 - (todos) get /api/workspace/:workspace_id/members
@@ -542,11 +668,10 @@ Tarea:
     - Crear la membresia con una propiedad 'invitacion_aceptada': false
     - Enviar un mail con un link para "aceptar invitacion" (debe tener una expiracion y debe enviar un token)
         - Ese link hara un GET hacia /api/workspace/:workspace_id/members/accept-invite/:invitation_token
-
+    
 - (todos) Unauthentified /api/workspace/:workspace_id/members/accept-invite/:invitation_token
     - Verifica que el invitation_token sea valido y edita la membersia para marcar que lo acepto
 */
-
 
 
 

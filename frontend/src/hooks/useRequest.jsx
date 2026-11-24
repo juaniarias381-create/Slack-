@@ -1,37 +1,55 @@
-import { useState } from "react";
+import { useCallback, useState } from 'react'
 
+/*
+Este hook maneja los 3 estados de cualquier pedido: cargando / respuesta /
+error.
 
-/* 
-Este hook nos va a permitir manejar mediante estados la respuesta del servidor
+Analogia: es el portero del edificio. Recibe una funcion que hace el pedido,
+prende el cartel "cargando", guarda la respuesta o el error, y siempre apaga
+el cartel al final.
+
+sendRequest devuelve la respuesta cuando sale bien, para que quien llama
+pueda decidir que hacer (por ejemplo, limpiar un formulario).
 */
+function useRequest() {
+    const [loading, set_loading] = useState(false)
+    const [response, set_response] = useState(null)
+    const [error, set_error] = useState(null)
 
-function useRequest (){
-    const [loading, setLoading] = useState(false)
-    const [response, setResponse] = useState(null)
-    const [error, setError] = useState(null)
+    const sendRequest = useCallback(
+        async (requestFn) => {
+            try {
+                set_loading(true)
+                const result = await requestFn()
+                set_response(result)
+                set_error(null)
+                return result
+            } catch (error) {
+                set_response(null)
+                set_error(error.message)
+                return null
+            } finally {
+                set_loading(false)
+            }
+        },
+        []
+    )
 
-
-    async function sendRequest (requestFn) {
-        try{
-            setLoading(true)
-            const response = await requestFn()
-            setResponse(response)
-            setError(null)
-        }
-        catch(error){
-            setResponse(null)
-            setError(error.message)
-        }
-        finally{
-            setLoading(false)
-        }
-    }
+    const reset = useCallback(
+        () => {
+            set_loading(false)
+            set_response(null)
+            set_error(null)
+        },
+        []
+    )
 
     return {
         loading,
         response,
         error,
-        sendRequest
+        sendRequest,
+        reset
     }
 }
 

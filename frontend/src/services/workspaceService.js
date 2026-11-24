@@ -1,83 +1,57 @@
-const API_URL = import.meta.env.VITE_APP_URL_BACKEND
+import apiRequest from './apiRequest'
 
-export async function createWorkspace(name, description){
-    const auth_token = localStorage.getItem('auth_token')
-    const response_http = await fetch(
-            API_URL + '/api/workspaces',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `bearer ${auth_token}`
-                },
-                body: JSON.stringify({ name, description })
-            }
-        )
-    const response_body = await response_http.json()
+/*
+Services de workspace: traducen acciones de la UI a llamadas HTTP.
+El componente/Context no sabe nada de URLs ni de tokens; solo llama aca.
+*/
 
-    if(!response_body.ok){
-        throw new Error(response_body.message)
-    }
-
-    return response_body
+export async function createWorkspace(name, description) {
+    return await apiRequest(
+        '/api/workspaces',
+        {
+            method: 'POST',
+            body: { name, description }
+        }
+    )
 }
 
-export async function getAllWorkspaces(){
-    const auth_token = localStorage.getItem('auth_token')
-    const response_http = await fetch(
-            API_URL + '/api/workspaces',
-            {
-                method: 'GET',
-                headers: {
-                    'Authorization': `bearer ${auth_token}`
-                }
-            }
-        )
-    const response_body = await response_http.json()
-
-    if(!response_body.ok){
-        throw new Error(response_body.message)
-    }
-
-    return response_body
+export async function getAllWorkspaces() {
+    return await apiRequest('/api/workspaces')
 }
 
-export async function getWorkspaceById(workspace_id){
-    const auth_token = localStorage.getItem('auth_token')
-    const response_http = await fetch(
-            API_URL + '/api/workspaces/' + workspace_id,
-            {
-                method: 'GET',
-                headers: {
-                    'Authorization': `bearer ${auth_token}`
-                }
-            }
-        )
-    const response_body = await response_http.json()
-
-    if(!response_body.ok){
-        throw new Error(response_body.message)
-    }
-
-    return response_body
+export async function getWorkspaceById(workspace_id) {
+    return await apiRequest(`/api/workspaces/${workspace_id}`)
 }
 
-export async function getMembersByWorkspaceId(workspace_id){
-    const auth_token = localStorage.getItem('auth_token')
-    const response_http = await fetch(
-            API_URL + '/api/workspaces/' + workspace_id + '/members',
-            {
-                method: 'GET',
-                headers: {
-                    'Authorization': `bearer ${auth_token}`
-                }
-            }
-        )
-    const response_body = await response_http.json()
+export async function getMembersByWorkspaceId(workspace_id) {
+    return await apiRequest(`/api/workspaces/${workspace_id}/members`)
+}
 
-    if(!response_body.ok){
-        throw new Error(response_body.message)
-    }
+export async function updateWorkspace(workspace_id, name, description) {
+    return await apiRequest(
+        `/api/workspaces/${workspace_id}`,
+        {
+            method: 'PUT',
+            body: { name, description }
+        }
+    )
+}
 
-    return response_body
+export async function deleteWorkspace(workspace_id) {
+    return await apiRequest(
+        `/api/workspaces/${workspace_id}`,
+        {
+            method: 'DELETE'
+        }
+    )
+}
+
+export async function addWorkspaceMember(workspace_id, email, rol) {
+    return await apiRequest(
+        `/api/workspaces/${workspace_id}/members`,
+        {
+            method: 'POST',
+            body: { email, rol }
+        }
+    )
 }

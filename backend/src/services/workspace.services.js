@@ -6,42 +6,103 @@ leen la request, llaman al servicio y formatean la respuesta HTTP)
 
 Responsabilidades por servicio:
     - getWorkspacesByUser: trae todos los espacios de trabajo de un usuario, cada uno con su lista de miembros (nombre y rol)
-    - createWorkspaceWithOwner: crea el espacio de trabajo y le asigna al creador una membresia de 'owner'
-    - deleteWorkspaceWithMemberships: elimina el espacio de trabajo y, en cascada, todas sus membresias
-    - updateWorkspaceData: valida los campos requeridos y actualiza nombre/descripcion del workspace
+    - createWorkspaceWithOwner: valida los datos, crea el espacio de trabajo y le asigna al creador una membresia de 'owner'
+    - addMemberToWorkspace: valida el rol de quien agrega y crea la membresia de un usuario en el workspace
+    - deleteWorkspaceWithMemberships: elimina el espacio de trabajo y, en cascada, sus mensajes, canales y membresias
+    - updateWorkspaceData: valida los campos y actualiza nombre/descripcion del workspace
 */
 
 import workspace_repository from '../repositories/workspace.repository.js'
 import member_repository from '../repositories/member.repository.js'
+import user_repository from '../repositories/user.repository.js'
+import channel_repository from '../repositories/channel.repository.js'
+import message_channel_repository from '../repositories/messageChannel.repository.js'
 import ServerError from '../utils/error.util.js'
+import { normalizeText } from '../utils/validation.util.js'
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const ALLOWED_MEMBER_ROLES = ['admin', 'user']
+
+const ROLE_ORDER = {
+    owner: 0,
+    admin: 1,
+    user: 2
+}
+
+
+/*
+Normaliza y valida el nombre del workspace.
+Devuelve el nombre sin espacios sobrantes o lanza un 400.
+*/
+function normalizeWorkspaceName(name) {
+    return normalizeText(
+        name,
+        {
+            field: 'El nombre del workspace',
+            required: true,
+            max_length: 30
+        }
+    )
+}
+
+
+/*
+Normaliza y valida la descripcion del workspace.
+Una descripcion vacia es valida: el workspace puede no tener descripcion.
+*/
+function normalizeWorkspaceDescription(description) {
+    return normalizeText(
+        description,
+        {
+            field: 'La descripcion del workspace',
+            max_length: 200,
+            allow_newlines: true
+        }
+    )
+}
 
 
 /*
 Traer todos los espacios de trabajo asociados a un usuario,
 con la lista de miembros (nombre y rol) de cada espacio de trabajo
 */
-export async function getWorkspacesByUser (user_id) {
+export async function getWorkspacesByUser(user_id) {
     return await member_repository.getAllWorkspacesWithMembersByUserId(user_id)
 }
 
 
 /*
 Traer la lista de miembros de un espacio de trabajo,
-con el nombre, email y rol de cada membresia
+con el nombre, email y rol de cada membresia.
+Se ordenan por jerarquia (owner, admin, user) y luego por nombre.
 */
-export async function getMembersByWorkspaceId (workspace_id) {
+export async function getMembersByWorkspaceId(workspace_id) {
     const memberships = await member_repository.getAllMembershipsByWorkspaceId(workspace_id)
 
-    return memberships.map(
-        membership => {
-            return {
-                member_id: membership._id,
-                nombre: membership.fk_id_usuario?.nombre,
-                email: membership.fk_id_usuario?.email,
-                rol: membership.rol
+    return memberships
+        .map(
+            membership => {
+                return {
+                    member_id: membership._id,
+                    nombre: membership.fk_id_usuario?.nombre,
+                    email: membership.fk_id_usuario?.email,
+                    rol: membership.rol
+                }
             }
-        }
-    )
+        )
+        .sort(
+            (member_a, member_b) => {
+                const role_difference =
+                    (ROLE_ORDER[member_a.rol] ?? 99) - (ROLE_ORDER[member_b.rol] ?? 99)
+
+                if (role_difference !== 0) {
+                    return role_difference
+                }
+
+                return (member_a.nombre || '').localeCompare(member_b.nombre || '', 'es')
+            }
+        )
 }
 
 
@@ -49,8 +110,14 @@ export async function getMembersByWorkspaceId (workspace_id) {
 Crear un espacio de trabajo y asignar al usuario creador
 una membresia con el rol de 'owner'
 */
-export async function createWorkspaceWithOwner (user_id, name, description) {
-    const workspace_created = await workspace_repository.createWorkspace(name, description)
+export async function createWorkspaceWithOwner(user_id, name, description) {
+    const normalized_name = normalizeWorkspaceName(name)
+    const normalized_description = normalizeWorkspaceDescription(description)
+
+    const workspace_created = await workspace_repository.createWorkspace(
+        normalized_name,
+        normalized_description
+    )
 
     const owner_membership = await member_repository.create(
         user_id,
@@ -66,26 +133,116 @@ export async function createWorkspaceWithOwner (user_id, name, description) {
 
 
 /*
-Eliminar un espacio de trabajo y, en cascada, todas las membresias
-que apuntaban a ese espacio de trabajo
+Agregar un miembro a un espacio de trabajo.
+
+Solo el owner puede agregar miembros. El rol de la membresia a crear
+solo puede ser 'admin' o 'user' (nunca 'owner').
+
+Ademas valida que el email sea valido, que exista un usuario con ese email,
+que este activo y que todavia no sea miembro del workspace.
 */
-export async function deleteWorkspaceWithMemberships (workspace_id) {
-    await workspace_repository.deleteById(workspace_id)
+export async function addMemberToWorkspace(workspace_id, actor_role, email, member_role) {
+    if (actor_role !== 'owner') {
+        throw new ServerError(
+            'Solo el owner puede agregar miembros a este espacio de trabajo',
+            403
+        )
+    }
+
+    if (typeof email !== 'string' || email.trim().length === 0) {
+        throw new ServerError('email es un campo requerido', 400)
+    }
+
+    const normalized_email = email.trim()
+
+    if (!EMAIL_REGEX.test(normalized_email)) {
+        throw new ServerError('El email no es valido', 400)
+    }
+
+    if (member_role === 'owner') {
+        throw new ServerError(
+            'No se puede asignar el rol owner desde este endpoint',
+            403
+        )
+    }
+
+    if (!ALLOWED_MEMBER_ROLES.includes(member_role)) {
+        throw new ServerError('El rol debe ser admin o user', 400)
+    }
+
+    const user_found = await user_repository.getByEmail(normalized_email)
+
+    if (!user_found) {
+        throw new ServerError(
+            "No existe un usuario con ese email",
+            404
+        )
+    }
+
+    if (!user_found.activo) {
+        throw new ServerError(
+            'El usuario esta desactivado de la plataforma',
+            403
+        )
+    }
+
+    const existing_membership = await member_repository.getMembershipByUserAndWorkspace(
+        user_found._id,
+        workspace_id
+    )
+
+    if (existing_membership) {
+        throw new ServerError(
+            "El usuario ya es miembro de este espacio de trabajo",
+            409
+        )
+    }
+
+    return await member_repository.create(user_found._id, workspace_id, member_role)
+}
+
+
+/*
+Eliminar un espacio de trabajo y, en cascada:
+    1. los mensajes de sus canales
+    2. sus canales
+    3. sus membresias
+    4. el workspace
+
+El orden importa: primero los hijos, despues el padre. Si algo falla a mitad
+de camino no queda un workspace eliminado con datos huerfanos apuntandole.
+*/
+export async function deleteWorkspaceWithMemberships(workspace_id) {
+    const channel_ids = await channel_repository.getAllIdsByWorkspaceId(workspace_id)
+
+    if (channel_ids.length > 0) {
+        await message_channel_repository.deleteAllByChannelIds(channel_ids)
+    }
+
+    await channel_repository.deleteAllByWorkspaceId(workspace_id)
     await member_repository.deleteAllMembershipsByWorkspaceId(workspace_id)
+    await workspace_repository.deleteById(workspace_id)
 }
 
 
 /*
 Actualizar el nombre/descripcion de un espacio de trabajo.
-Valida que los campos requeridos vengan completos
+El nombre es obligatorio; la descripcion es opcional.
 */
-export async function updateWorkspaceData (workspace_id, name, description) {
-    if(!name || !description){
-        throw new ServerError("name y description son campos requeridos", 400)
+export async function updateWorkspaceData(workspace_id, name, description) {
+    const normalized_name = normalizeWorkspaceName(name)
+
+    const update_data = {
+        nombre: normalized_name
     }
 
-    return await workspace_repository.updateById(
-        workspace_id,
-        { nombre: name, description }
-    )
+    /*
+    Si el cliente no manda description, no la tocamos. Si la manda
+    (aunque sea vacia), la reemplazamos.
+    */
+    if (description !== undefined) {
+        update_data.description = normalizeWorkspaceDescription(description)
+    }
+
+    return await workspace_repository.updateById(workspace_id, update_data)
 }

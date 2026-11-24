@@ -25,17 +25,17 @@ class UserRepository {
         const [result] = await pool.execute(
             query_sql,
             [
-                nombre,
+                nombre, 
                 email, 
                 password
             ]
         )
         console.log('[UserRepository.create]:', result)
         return result.insertId
-        
+    
     } */
-
-   /*  async get(){
+    
+   /* async get(){
         const [result] = await pool.execute(`SELECT * FROM usuarios`)
         console.log('[UserRepository.get]:', result)
         const result_formatted = result.map(
@@ -86,12 +86,10 @@ class UserRepository {
                 $options: 'i' //Permite buscar de forma 'no case sensitive' (Sin diferenciar entre mayus y minus)
             }, 
             activo: true
-        })
-        .limit(5)
+        }).limit(5)
 
-        return user
+        return result
     }
-
     
     //MongoDB
    async getById (user_id){
@@ -106,7 +104,6 @@ class UserRepository {
         const [result] = await pool.execute(
             'SELECT * FROM usuarios WHERE id = ?',
             [user_id]
-        )
         
         const user_found = result[0]
         console.log('[UserRepository.get]:', user_found)
@@ -138,8 +135,14 @@ class UserRepository {
     
     async  getByEmail (email){
     
-        //Te devuelve null (si no encuentra) o un objeto con el resultado
-        const result = await User.findOne({email: email})
+        /*
+        Te devuelve null (si no encuentra) o un objeto con el resultado.
+        La collation hace la busqueda case-insensitive: "Ana@Mail.com" y
+        "ana@mail.com" se consideran el mismo email.
+        */
+        const result = await User
+            .findOne({email: email})
+            .collation({ locale: 'en', strength: 2 })
         return result
     } 
 
@@ -149,7 +152,6 @@ class UserRepository {
             update_data
         )
     }
-    
 }
 
 //El UserRepostory es un sigleton, solo tiene una instancia

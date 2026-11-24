@@ -2,11 +2,24 @@ import MessageChannel from "../models/messageChannel.model.js"
 
 class MessageChannelRepository {
     async create(contenido, member_id, channel_id) {
-        await MessageChannel.create({
+        return await MessageChannel.create({
             contenido: contenido,
             fk_id_emisor: member_id,
             fk_id_canal: channel_id
         })
+    }
+
+    async getById(message_id) {
+        return await MessageChannel
+            .findById(message_id)
+            .populate({
+                path: 'fk_id_emisor',
+                select: 'rol fk_id_usuario',
+                populate: {
+                    path: 'fk_id_usuario',
+                    select: 'nombre'
+                }
+            })
     }
 
     async deleteById(message_id) {
@@ -62,6 +75,12 @@ class MessageChannelRepository {
         const result = await MessageChannel.find({ fk_id_emisor: member_id })
         console.log(result)
         return result
+    }
+
+    // Se usa al eliminar un workspace: primero sacamos los mensajes de sus
+    // canales para no dejar documentos huerfanos apuntando a canales borrados.
+    async deleteAllByChannelIds(channel_ids) {
+        return await MessageChannel.deleteMany({ fk_id_canal: { $in: channel_ids } })
     }
 }
 

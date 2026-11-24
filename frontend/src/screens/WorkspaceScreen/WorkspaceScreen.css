@@ -1,0 +1,86 @@
+/*
+  Layout general de la pantalla de workspace.
+
+  Sidebar violeta fija a la izquierda + panel principal que se estira.
+  El panel principal es un flex column: header arriba y canal/bienvenida
+  abajo, con scroll interno en los mensajes.
+*/
+
+.workspace-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--surface);
+}
+
+.workspace-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Estados globales: cargando / error / sin datos */
+.workspace-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 100vh;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.workspace-state .alert {
+  max-width: 520px;
+}
+
+.workspace-state__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.workspace-state__button {
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--brand);
+  background-color: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.workspace-state__button:hover {
+  background-color: var(--brand-soft);
+  border-color: var(--border-strong);
+}
+
+.workspace-state__link {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.workspace-state__link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+  .workspace-layout {
+    flex-direction: column;
+  }
+
+  .workspace-content {
+    height: auto;
+    min-height: 55vh;
+    overflow: visible;
+  }
+}

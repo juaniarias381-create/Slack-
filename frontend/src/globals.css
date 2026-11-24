@@ -62,3 +62,20 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Tonos estables para avatares de miembros y autores de mensajes. */
+.workspace-avatar-tone--0 {
+  background-color: #E8912D;
+}
+
+.workspace-avatar-tone--1 {
+  background-color: #2BAC76;
+}
+
+.workspace-avatar-tone--2 {
+  background-color: #1264A3;
+}
+
+.workspace-avatar-tone--3 {
+  background-color: #E01E5A;
+}

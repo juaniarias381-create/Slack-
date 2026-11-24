@@ -7,6 +7,7 @@ import {
     getWorkspacesByUser,
     getMembersByWorkspaceId,
     createWorkspaceWithOwner,
+    addMemberToWorkspace,
     deleteWorkspaceWithMemberships,
     updateWorkspaceData
 } from '../services/workspace.services.js'
@@ -14,8 +15,7 @@ import {
 
 /*
 (Authentified) GET /api/workspace
-    Traer la lista de espacios de trabajo asociados a ese usuario (basicamente sus membresias),
-    con el rol de membresia en cada espacio de trabajo
+    Traer la lista de espacios de trabajo asociados a ese usuario (basicamente sus membresias), con el rol de membresia en cada espacio de trabajo
 */
 export async function getUserWorkspaces (request, response) {
     const workspaces_obtenidos = await getWorkspacesByUser(request.user.id)
@@ -69,7 +69,8 @@ export async function getWorkspaceById (request, response) {
         message: "Workspace obtenido correctamente",
         status: 200,
         data: {
-            workspace_selected: request.workspace
+            workspace_selected: request.workspace,
+            my_role: request.membership.rol
         }
     })
 }
@@ -113,7 +114,7 @@ export async function deleteWorkspace (request, response) {
 
 
 /*
-(owner, admin) PUT /api/workspace/:workspace_id
+(owner) PUT /api/workspaces/:workspace_id
     Actualizar nombre/descripcion del espacio de trabajo
 */
 export async function updateWorkspace (request, response) {
@@ -128,6 +129,35 @@ export async function updateWorkspace (request, response) {
         status: 200,
         data: {
             workspace_updated
+        }
+    })
+}
+
+
+/*
+(owner) POST /api/workspace/:workspace_id/members
+    Agregar un miembro al espacio de trabajo a partir de su email.
+    El backend valida que quien agrega sea 'owner'.
+    - Valida que el email sea valido y que exista el usuario
+    - Valida que no este ya agregado al workspace
+    - Crea la membresia con rol admin o user segun sea
+*/
+export async function createWorkspaceMember (request, response) {
+    const { email, rol } = request.body
+
+    const membership_created = await addMemberToWorkspace(
+        request.workspace._id,
+        request.membership.rol,
+        email,
+        rol
+    )
+
+    return response.status(201).send({
+        ok: true,
+        message: "Miembro agregado correctamente",
+        status: 201,
+        data: {
+            membership_created
         }
     })
 }
