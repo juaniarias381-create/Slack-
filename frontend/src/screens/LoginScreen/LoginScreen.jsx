@@ -92,6 +92,9 @@ function LoginScreen() {
                 <p className='form-footer'>
                     Olvidaste tu contraseña? <Link to='/forgot-password'>Olvidé mi contraseña</Link>
                 </p>
+                <p className='form-footer'>
+                    ¿No tenés cuenta? <Link to='/register'>Registrate</Link>
+                </p>
             </div>
         </div>
     )
