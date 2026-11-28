@@ -93,6 +93,7 @@ Estos middlewares se aplican a **todos** los endpoints de la API (se registran c
 | POST | `/api/workspaces` | `authMiddleware` | Crea un workspace con `name` y `description` (body); el usuario autenticado queda como `owner` mediante una membresía. Responde `201` con `workspace_created` y `owner_membership` |
 | GET | `/api/workspaces/:workspace_id` | `authMiddleware` → `workspaceMiddleware([])` | Devuelve el detalle del workspace. Requiere ser miembro (cualquier rol). Responde `200` con `workspace_selected` |
 | GET | `/api/workspaces/:workspace_id/members` | `authMiddleware` → `workspaceMiddleware([])` | Devuelve la lista de miembros (nombre, email y rol) del workspace. Requiere ser miembro. Responde `200` con `data.members` |
+| POST | `/api/workspaces/:workspace_id/members` | `authMiddleware` → `workspaceMiddleware(['owner'])` | Agrega un miembro con `email` y `rol` (`admin`/`user`) en el body. Si el email no existe o está desactivado no crea nada, pero responde lo mismo (`200` y mensaje ambiguo) para no revelar el estado de la cuenta. |
 | PUT | `/api/workspaces/:workspace_id` | `authMiddleware` → `workspaceMiddleware(['owner', 'admin'])` | Actualiza `name`/`description` del workspace (body). Solo `owner` y `admin`. Responde `200` |
 | DELETE | `/api/workspaces/:workspace_id` | `authMiddleware` → `workspaceMiddleware(['owner'])` | Elimina el workspace y sus membresías. Solo `owner`. Responde `200` |
 

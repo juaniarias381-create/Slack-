@@ -1,5 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router'
-import { FaArrowLeft, FaPlus } from 'react-icons/fa6'
+import { FaArrowLeft, FaEllipsisVertical, FaPenToSquare, FaPlus, FaTrashCan } from 'react-icons/fa6'
 import { getAvatarTone, getInitial } from '../../utils/format.util'
 import './WorkspaceSidebar.css'
 
@@ -41,33 +42,123 @@ export default function WorkspaceSidebar({
     can_create_channels,
     is_owner,
     onOpenCreateChannel,
-    onOpenAddMember
+    onOpenAddMember,
+    onEdit,
+    onDelete
 }) {
     const workspace_id = workspace?._id
+    const [workspace_menu_open, set_workspace_menu_open] = useState(false)
+    const workspace_menu_ref = useRef(null)
+
+    useEffect(
+        () => {
+            if (!workspace_menu_open) return
+
+            function handlePointerDown(event) {
+                if (!workspace_menu_ref.current?.contains(event.target)) {
+                    set_workspace_menu_open(false)
+                }
+            }
+
+            function handleKeyDown(event) {
+                if (event.key === 'Escape') {
+                    set_workspace_menu_open(false)
+                }
+            }
+
+            document.addEventListener('pointerdown', handlePointerDown)
+            document.addEventListener('keydown', handleKeyDown)
+
+            return () => {
+                document.removeEventListener('pointerdown', handlePointerDown)
+                document.removeEventListener('keydown', handleKeyDown)
+            }
+        },
+        [workspace_menu_open]
+    )
+
+    function handleEdit() {
+        set_workspace_menu_open(false)
+        onEdit()
+    }
+
+    function handleDelete() {
+        set_workspace_menu_open(false)
+        onDelete()
+    }
 
     return (
         <aside className='workspace-sidebar'>
-            <Link
-                to={`/workspace/${workspace_id}`}
-                className='workspace-sidebar__identity'
-                title='Volver a la bienvenida del espacio'
+            <div
+                className='workspace-sidebar__identity-row'
+                ref={workspace_menu_ref}
             >
-                <span
-                    className='workspace-sidebar__avatar'
-                    aria-hidden='true'
+                <Link
+                    to={`/workspace/${workspace_id}`}
+                    className='workspace-sidebar__identity'
+                    title='Volver a la bienvenida del espacio'
                 >
-                    {getInitial(workspace?.nombre)}
-                </span>
-
-                <div className='workspace-sidebar__identity-info'>
-                    <strong className='workspace-sidebar__workspace-name'>
-                        {workspace?.nombre || 'Workspace'}
-                    </strong>
-                    <span className='workspace-sidebar__workspace-subtitle'>
-                        Espacio de trabajo
+                    <span
+                        className='workspace-sidebar__avatar'
+                        aria-hidden='true'
+                    >
+                        {getInitial(workspace?.nombre)}
                     </span>
-                </div>
-            </Link>
+
+                    <div className='workspace-sidebar__identity-info'>
+                        <strong className='workspace-sidebar__workspace-name'>
+                            {workspace?.nombre || 'Workspace'}
+                        </strong>
+                        <span className='workspace-sidebar__workspace-subtitle'>
+                            Espacio de trabajo
+                        </span>
+                    </div>
+                </Link>
+
+                {
+                    is_owner
+                    &&
+                    <button
+                        type='button'
+                        className='workspace-sidebar__menu-button'
+                        onClick={() => set_workspace_menu_open(true)}
+                        aria-label='Opciones del espacio'
+                        aria-haspopup='menu'
+                        aria-expanded={workspace_menu_open}
+                        title='Opciones del espacio'
+                    >
+                        <FaEllipsisVertical aria-hidden='true' />
+                    </button>
+                }
+
+                {
+                    is_owner
+                    &&
+                    workspace_menu_open
+                    &&
+                    <div className='workspace-sidebar__menu' role='menu'>
+                        <button
+                            type='button'
+                            role='menuitem'
+                            className='workspace-sidebar__menu-item'
+                            onClick={handleEdit}
+                        >
+                            <FaPenToSquare aria-hidden='true' />
+                            Editar espacio
+                        </button>
+
+                        <button
+                            type='button'
+                            role='menuitem'
+                            className='workspace-sidebar__menu-item workspace-sidebar__menu-item--danger'
+                            onClick={handleDelete}
+                        >
+                            <FaTrashCan aria-hidden='true' />
+                            Eliminar espacio
+                        </button>
+                    </div>
+                }
+            </div>
 
             <section className='workspace-sidebar__section'>
                 <div className='workspace-sidebar__section-head'>

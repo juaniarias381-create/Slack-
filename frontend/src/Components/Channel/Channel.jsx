@@ -2,6 +2,7 @@ import { useContext } from 'react'
 import { ChannelContext } from '../../Context/ChannelContext'
 import Messages from '../Messages/Messages'
 import MessageForm from '../MessageForm/MessageForm'
+import RefreshMessagesButton from './RefreshMessagesButton'
 import './Channel.css'
 
 /*
@@ -51,11 +52,15 @@ export default function Channel() {
     return (
         <section className='channel'>
             <header className='channel__header'>
-                <h2 className='channel__title'># {channel.nombre}</h2>
-                {
-                    channel.descripcion
-                    && <p className='channel__description'>{channel.descripcion}</p>
-                }
+                <div className='channel__heading'>
+                    <h2 className='channel__title'># {channel.nombre}</h2>
+                    {
+                        channel.descripcion
+                        && <p className='channel__description'>{channel.descripcion}</p>
+                    }
+                </div>
+
+                <RefreshMessagesButton />
             </header>
 
             <Messages />

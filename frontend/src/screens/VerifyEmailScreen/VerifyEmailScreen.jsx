@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import useRequest from '../../hooks/useRequest'
 import { verifyEmail } from '../../services/authService'
+import Alert from '../../Components/Alert/Alert'
+import '../../Components/Form/Form.css'
 
 /* 
 Esta screen recibe el verification_token que llega por querystring 
@@ -52,34 +54,75 @@ function VerifyEmailScreen() {
 
     if(!verification_token){
         return (
-            <div>
-                <h1>Verificacion de email</h1>
-                <p style={{color: 'red'}}>No se encontro el token de verificacion en el link</p>
+            <div className='form-screen'>
+                <div className='form-card'>
+                    <img
+                        className='form-logo'
+                        alt='Slack'
+                        height='26'
+                        title='Slack'
+                        src='https://a.slack-edge.com/bv1-13/slack_logo-97f7334.svg'
+                    />
+                    <h1 className='form-title form-title--wrap'>Verificación de email</h1>
+                    <p className='form-subtitle'>
+                        El link que usaste no es válido o está incompleto
+                    </p>
+                    <div className='form-stack'>
+                        <Alert type='error'>
+                            No se encontró el token de verificación en el link
+                        </Alert>
+                    </div>
+                    <p className='form-footer'>
+                        Pedí un mail nuevo desde <Link to='/resend-email-verification'>reenviar mail de verificación</Link>
+                    </p>
+                    <p className='form-footer'>
+                        ¿Ya tenés cuenta? <Link to='/login'>Iniciá sesión</Link>
+                    </p>
+                </div>
             </div>
         )
     }
 
     return (
-        <div>
-            <h1>Verificacion de email</h1>
-            <p>Estamos verificando tu cuenta...</p>
-            {
-                loading
-                && <span>Verificando...</span>
-            }
-            {
-                error
-                && !loading
-                && <span style={{color: 'red'}}>{error}</span>
-            }
-            {
-                response
-                && response.ok
-                && !loading
-                && <span style={{color: 'green'}}>
-                    {response.message} - Te redirigiremos al login en unos segundos...
-                </span>
-            }
+        <div className='form-screen'>
+            <div className='form-card'>
+                <img
+                    className='form-logo'
+                    alt='Slack'
+                    height='26'
+                    title='Slack'
+                    src='https://a.slack-edge.com/bv1-13/slack_logo-97f7334.svg'
+                />
+                <h1 className='form-title form-title--wrap'>Verificación de email</h1>
+                <p className='form-subtitle'>
+                    Estamos verificando tu cuenta...
+                </p>
+                <div className='form-stack'>
+                    {
+                        loading
+                        && <Alert type='info'>Verificando...</Alert>
+                    }
+                    {
+                        error
+                        && !loading
+                        && <Alert type='error'>{error}</Alert>
+                    }
+                    {
+                        response
+                        && response.ok
+                        && !loading
+                        && <Alert type='success'>
+                            {response.message} - Te redirigiremos al login en unos segundos...
+                        </Alert>
+                    }
+                </div>
+                <p className='form-footer'>
+                    ¿No recibiste el mail? <Link to='/resend-email-verification'>Reenviar mail de verificación</Link>
+                </p>
+                <p className='form-footer'>
+                    ¿Ya tenés cuenta? <Link to='/login'>Iniciá sesión</Link>
+                </p>
+            </div>
         </div>
     )
 }

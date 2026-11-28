@@ -26,7 +26,7 @@ const defaultValue = {
     messages_response: null,
     messages_error: null,
     messages_loading: false,
-    reloadMessages: () => {},
+    refetchMessages: () => {},
     sendMessage: () => {}
 }
 
@@ -65,7 +65,7 @@ export default function ChannelContextProvider({ children }) {
         [channel_id, sendChannelRequest, workspace_id]
     )
 
-    const reloadMessages = useCallback(
+    const refetchMessages = useCallback(
         () => {
             if (!workspace_id || !channel_id) {
                 return
@@ -86,13 +86,13 @@ export default function ChannelContextProvider({ children }) {
             }
 
             reloadChannel()
-            reloadMessages()
+            refetchMessages()
         },
         [
             channel_id,
             workspace_id,
             reloadChannel,
-            reloadMessages,
+            refetchMessages,
             resetChannel,
             resetMessages
         ]
@@ -114,7 +114,7 @@ export default function ChannelContextProvider({ children }) {
             content
         )
 
-        await reloadMessages()
+        await refetchMessages()
 
         return result
     }
@@ -129,7 +129,7 @@ export default function ChannelContextProvider({ children }) {
                 messages_response,
                 messages_error,
                 messages_loading,
-                reloadMessages,
+                refetchMessages,
                 sendMessage: handleSendMessage
             }}
         >

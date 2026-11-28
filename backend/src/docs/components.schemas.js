@@ -270,6 +270,17 @@ export default {
         },
     },
 
+    MemberInvitationResponse: {
+        type: 'object',
+        description: 'Respuesta ambigua de POST /api/workspaces/:workspace_id/members. Es identica aunque no se cree la membresia, para no revelar si el email existe o esta activo.',
+        properties: {
+            ok: { type: 'boolean', example: true },
+            status: { type: 'integer', example: 200 },
+            message: { type: 'string', example: 'Se procesara la solicitud en caso de que exista una cuenta con ese email' },
+            data: { type: 'object', example: {} },
+        },
+    },
+
     WorkspaceUpdatedResponse: {
         type: 'object',
         properties: {

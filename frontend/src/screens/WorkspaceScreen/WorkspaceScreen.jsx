@@ -112,15 +112,12 @@ export default function WorkspaceScreen() {
                 is_owner={is_owner}
                 onOpenCreateChannel={() => set_create_channel_open(true)}
                 onOpenAddMember={() => set_add_member_open(true)}
+                onEdit={() => set_edit_workspace_open(true)}
+                onDelete={() => set_delete_workspace_open(true)}
             />
 
             <main className='workspace-content'>
-                <WorkspaceHeader
-                    workspace={workspace}
-                    is_owner={is_owner}
-                    onEdit={() => set_edit_workspace_open(true)}
-                    onDelete={() => set_delete_workspace_open(true)}
-                />
+                <WorkspaceHeader workspace={workspace} />
 
                 {
                     channel_id

@@ -1,7 +1,6 @@
-import { FaPenToSquare, FaTrashCan } from 'react-icons/fa6'
 import './WorkspaceHeader.css'
 
-export default function WorkspaceHeader({ workspace, is_owner, onEdit, onDelete }) {
+export default function WorkspaceHeader({ workspace }) {
     return (
         <header className='workspace-main-header'>
             <div className='workspace-main-header__info'>
@@ -17,30 +16,6 @@ export default function WorkspaceHeader({ workspace, is_owner, onEdit, onDelete 
                     </p>
                 }
             </div>
-
-            {
-                is_owner
-                &&
-                <div className='workspace-main-header__actions'>
-                    <button
-                        type='button'
-                        className='workspace-main-header__button'
-                        onClick={onEdit}
-                    >
-                        <FaPenToSquare aria-hidden='true' />
-                        Editar espacio
-                    </button>
-
-                    <button
-                        type='button'
-                        className='workspace-main-header__button workspace-main-header__button--danger'
-                        onClick={onDelete}
-                    >
-                        <FaTrashCan aria-hidden='true' />
-                        Eliminar espacio
-                    </button>
-                </div>
-            }
         </header>
     )
 }

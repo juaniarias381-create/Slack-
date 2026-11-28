@@ -9,7 +9,8 @@ import {
     createWorkspaceWithOwner,
     addMemberToWorkspace,
     deleteWorkspaceWithMemberships,
-    updateWorkspaceData
+    updateWorkspaceData,
+    MEMBER_INVITATION_MESSAGE
 } from '../services/workspace.services.js'
 
 
@@ -138,26 +139,29 @@ export async function updateWorkspace (request, response) {
 (owner) POST /api/workspace/:workspace_id/members
     Agregar un miembro al espacio de trabajo a partir de su email.
     El backend valida que quien agrega sea 'owner'.
-    - Valida que el email sea valido y que exista el usuario
-    - Valida que no este ya agregado al workspace
-    - Crea la membresia con rol admin o user segun sea
+    - Valida que el email sea valido, que no este ya agregado al workspace
+      y crea la membresia con rol admin o user segun sea
+    - Si el email no existe o esta desactivado, no crea nada y devuelve la
+      misma respuesta ambigua para no revelar el estado de la cuenta
 */
 export async function createWorkspaceMember (request, response) {
     const { email, rol } = request.body
 
-    const membership_created = await addMemberToWorkspace(
+    await addMemberToWorkspace(
         request.workspace._id,
         request.membership.rol,
         email,
         rol
     )
 
-    return response.status(201).send({
+    /*
+    La respuesta no incluye la membresia: si se crea en unos casos y en otros
+    no, el cuerpo revelaria si el email existe. Siempre devolvemos lo mismo.
+    */
+    return response.status(200).send({
         ok: true,
-        message: "Miembro agregado correctamente",
-        status: 201,
-        data: {
-            membership_created
-        }
+        status: 200,
+        message: MEMBER_INVITATION_MESSAGE,
+        data: {}
     })
 }

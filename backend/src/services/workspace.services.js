@@ -24,6 +24,13 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const ALLOWED_MEMBER_ROLES = ['admin', 'user']
 
+/*
+Mensaje ambiguo de la solicitud de invitacion: no revela si el email tiene
+cuenta, si esta activa o si ya es miembro. Lo usa el controller para responder
+siempre lo mismo, igual que hacen verificacion y reseteo de password.
+*/
+export const MEMBER_INVITATION_MESSAGE = 'Se procesara la solicitud en caso de que exista una cuenta con ese email'
+
 const ROLE_ORDER = {
     owner: 0,
     admin: 1,
@@ -138,8 +145,9 @@ Agregar un miembro a un espacio de trabajo.
 Solo el owner puede agregar miembros. El rol de la membresia a crear
 solo puede ser 'admin' o 'user' (nunca 'owner').
 
-Ademas valida que el email sea valido, que exista un usuario con ese email,
-que este activo y que todavia no sea miembro del workspace.
+Ademas valida que el email sea valido y que no exista ya una membresia.
+Si no hay usuario con ese email o esta desactivado devuelve null: el controller
+responde con el mensaje ambiguo para no revelar el estado de la cuenta.
 */
 export async function addMemberToWorkspace(workspace_id, actor_role, email, member_role) {
     if (actor_role !== 'owner') {
@@ -172,18 +180,12 @@ export async function addMemberToWorkspace(workspace_id, actor_role, email, memb
 
     const user_found = await user_repository.getByEmail(normalized_email)
 
-    if (!user_found) {
-        throw new ServerError(
-            "No existe un usuario con ese email",
-            404
-        )
-    }
-
-    if (!user_found.activo) {
-        throw new ServerError(
-            'El usuario esta desactivado de la plataforma',
-            403
-        )
+    /*
+    No diferenciamos entre "no existe" y "desactivado": ambos casos devuelven
+    null para que la API responda exactamente lo mismo que en el caso exitoso.
+    */
+    if (!user_found || !user_found.activo) {
+        return null
     }
 
     const existing_membership = await member_repository.getMembershipByUserAndWorkspace(

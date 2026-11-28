@@ -17,7 +17,7 @@ export default function Messages() {
         messages_response,
         messages_error,
         messages_loading,
-        reloadMessages
+        refetchMessages
     } = useContext(ChannelContext)
 
     if (messages_loading || (!messages_response && !messages_error)) {
@@ -36,7 +36,7 @@ export default function Messages() {
                     <button
                         type='button'
                         className='channel-state__button'
-                        onClick={reloadMessages}
+                        onClick={refetchMessages}
                     >
                         Reintentar
                     </button>

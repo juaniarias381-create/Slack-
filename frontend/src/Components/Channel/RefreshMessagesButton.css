@@ -1,0 +1,52 @@
+/*
+Boton de recarga de mensajes. Sigue el estilo del boton de enviar
+(MessageForm.css), con la animacion de giro mientras el Context informa que
+el refetch esta en curso.
+*/
+
+.refresh-messages-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  font-size: 0.9rem;
+  color: #FFFFFF;
+  background-color: var(--brand);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease-out, opacity 0.15s ease-out;
+}
+
+.refresh-messages-button:hover:not(:disabled) {
+  background-color: var(--brand-dark);
+}
+
+.refresh-messages-button:focus-visible {
+  outline: 3px solid var(--brand-soft);
+  outline-offset: 2px;
+}
+
+.refresh-messages-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.refresh-messages-button__icon--spinning {
+  transform-origin: center;
+  animation: refresh-messages-spin 1.2s linear infinite;
+}
+
+@keyframes refresh-messages-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refresh-messages-button__icon--spinning {
+    animation: none;
+  }
+}

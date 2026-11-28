@@ -337,6 +337,9 @@ workspace_router.get(
  *     summary: Agrega un miembro a un workspace (solo owner)
  *     description: |
  *       Crea una membresia para el usuario cuyo email se indica en "email".
+ *       Si el email no corresponde a un usuario registrado o activo, no se crea
+ *       nada, pero la respuesta es identica al caso exitoso: asi el endpoint no
+ *       revela si una cuenta existe o esta desactivada.
  *
  *       Reglas de permisos segun el rol de quien agrega:
  *       - "owner" puede crear membresias con rol "admin" o "user"
@@ -345,10 +348,9 @@ workspace_router.get(
  *       Requiere header "Authorization: Bearer <jwt>" y rol "owner".
  *
  *       Errores posibles:
- *       - 400 "email es un campo requerido"
+ *       - 400 si falta el email o no es valido
  *       - 403 si el rol solicitado no esta permitido para quien agrega o si se intenta crear un owner
- *       - 404 "No existe un usuario con ese email"
- *       - 409 "El usuario ya tiene una membresia en este espacio de trabajo"
+ *       - 409 "El usuario ya es miembro de este espacio de trabajo"
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -372,24 +374,17 @@ workspace_router.get(
  *                 description: Rol de la membresia a crear (nunca "owner")
  *                 example: "user"
  *     responses:
- *       201:
- *         description: Membresia creada correctamente.
+ *       200:
+ *         description: Solicitud procesada. La respuesta es la misma aunque no se haya creado la membresia.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/MemberCreatedResponse'
+ *               $ref: '#/components/schemas/MemberInvitationResponse'
  *             example:
  *               ok: true
- *               status: 201
- *               message: "Miembro agregado correctamente"
- *               data:
- *                 membership_created:
- *                   _id: "674a1b2c3d4e5f6a7b8c9d0f"
- *                   fk_id_usuario: "674a1b2c3d4e5f6a7b8c9d11"
- *                   fk_id_espacio_trabajo: "674a1b2c3d4e5f6a7b8c9d0e"
- *                   rol: "user"
- *                   fecha_creacion: "2026-01-15T10:30:00.000Z"
- *                   __v: 0
+ *               status: 200
+ *               message: "Se procesara la solicitud en caso de que exista una cuenta con ese email"
+ *               data: {}
  *       400:
  *         description: Falta email o el header Authorization es invalido.
  *         content:
@@ -422,20 +417,17 @@ workspace_router.get(
  *                 summary: Un admin intenta crear un admin, o cualquiera intenta crear un owner
  *                 value: { ok: false, status: 403, message: "No tienes permisos para crear una membresia con ese rol" }
  *       404:
- *         description: Workspace inexistente o ningun usuario con ese email.
+ *         description: Workspace inexistente.
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorEnvelope'
- *             examples:
- *               workspace_inexistente:
- *                 summary: Workspace inexistente
- *                 value: { ok: false, status: 404, message: "Workspace no encontrado" }
- *               email_inexistente:
- *                 summary: Ningun usuario con ese email
- *                 value: { ok: false, status: 404, message: "No existe un usuario con ese email" }
+ *             example:
+ *               ok: false
+ *               status: 404
+ *               message: "Workspace no encontrado"
  *       409:
- *         description: El usuario ya tiene una membresia en el workspace.
+ *         description: El usuario ya es miembro de este espacio de trabajo.
  *         content:
  *           application/json:
  *             schema:

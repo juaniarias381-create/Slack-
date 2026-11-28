@@ -88,8 +88,8 @@ export default function AddMemberModal({ onClose, onCreated }) {
                     </select>
 
                     <p className='modal-form__hint'>
-                        Solo el owner puede agregar miembros. El usuario debe
-                        tener una cuenta y no pertenecer ya a este espacio.
+                        Solo el owner puede agregar miembros. Si el email
+                        coincide con una cuenta, se agregará al espacio.
                     </p>
                 </div>
 
