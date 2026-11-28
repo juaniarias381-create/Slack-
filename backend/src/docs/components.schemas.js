@@ -371,6 +371,36 @@ export default {
         },
     },
 
+    ChannelUpdatedResponse: {
+        type: 'object',
+        properties: {
+            ok: { type: 'boolean', example: true },
+            status: { type: 'integer', example: 200 },
+            message: { type: 'string', example: 'Canal actualizado correctamente' },
+            data: {
+                type: 'object',
+                properties: {
+                    channel_updated: { $ref: '#/components/schemas/Channel' },
+                },
+            },
+        },
+    },
+
+    ChannelDeletedResponse: {
+        type: 'object',
+        properties: {
+            ok: { type: 'boolean', example: true },
+            status: { type: 'integer', example: 200 },
+            message: { type: 'string', example: 'Canal eliminado correctamente' },
+            data: {
+                type: 'object',
+                properties: {
+                    channel_deleted: { $ref: '#/components/schemas/Channel' },
+                },
+            },
+        },
+    },
+
     Message: {
         type: 'object',
         description: 'Mensaje de canal con el emisor poblado (rol de la membresia y nombre del usuario)',

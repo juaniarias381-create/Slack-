@@ -56,7 +56,7 @@ class UserRepository {
  
     //MONGO DB
     async get() {
-        const result = await User.find()
+        const result = await User.find().select('-password')    
         return result
     }
 
@@ -92,36 +92,13 @@ class UserRepository {
     }
     
     //MongoDB
-   async getById (user_id){
-        const result = await User.findById(user_id)
+    async getById (user_id){
+        const result = await User.findById(user_id).select('-password')
     
         return result
     }
 
-    //MYSQL
 
-    /* async getById(user_id){
-        const [result] = await pool.execute(
-            'SELECT * FROM usuarios WHERE id = ?',
-            [user_id]
-        
-        const user_found = result[0]
-        console.log('[UserRepository.get]:', user_found)
-
-        if(user_found){
-            return new UserDTO(
-                user_found.id,
-                user_found.nombre,
-                user_found.email,
-                user_found.password,
-                user_found.activo,
-                user_found.fecha_creacion
-            )
-        }
-        else{
-            return null
-        }
-    } */
 
     async softDeleteById(user_id){
         const result = await User.findByIdAndUpdate(user_id, {activo: false})

@@ -13,15 +13,8 @@ class ChannelRepository {
         return await Channel.findByIdAndDelete(channel_id)
     }
 
-    async updateById(channel_id, name, description) {
-        return await Channel.findByIdAndUpdate(
-            channel_id,
-            {
-                nombre: name,
-                descripcion: description
-            },
-            { new: true }
-        )
+    async updateById(channel_id, update_data) {
+        return await Channel.findByIdAndUpdate(channel_id, update_data, { new: true })
     }
 
     async getAllChannelsByWorkpaceId(workspace_id) {
@@ -40,6 +33,21 @@ class ChannelRepository {
     async getByNameInWorkspace(workspace_id, name) {
         return await Channel
             .findOne({ fk_id_espacio_trabajo: workspace_id, nombre: name })
+            .collation({ locale: 'es', strength: 2 })
+    }
+
+    /*
+    Igual que getByNameInWorkspace, pero excluye el canal que se esta
+    editando. Sin esta exclusion, guardar un canal sin cambiar el nombre
+    daria un falso 409 contra si mismo.
+    */
+    async getByNameInWorkspaceExcludingId(workspace_id, name, channel_id) {
+        return await Channel
+            .findOne({
+                fk_id_espacio_trabajo: workspace_id,
+                nombre: name,
+                _id: { $ne: channel_id }
+            })
             .collation({ locale: 'es', strength: 2 })
     }
 

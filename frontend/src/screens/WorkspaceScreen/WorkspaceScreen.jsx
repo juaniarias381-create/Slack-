@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useWorkspaceContext } from '../../Context/WorkspaceContext'
+import { useChannelContext } from '../../Context/ChannelContext'
 import WorkspaceSidebar from '../../Components/WorkspaceSidebar/WorkspaceSidebar'
 import WorkspaceHeader from '../../Components/WorkspaceHeader/WorkspaceHeader'
 import WorkspaceWelcome from '../../Components/WorkspaceWelcome/WorkspaceWelcome'
@@ -9,6 +10,8 @@ import CreateChannelModal from '../../Components/CreateChannelModal/CreateChanne
 import AddMemberModal from '../../Components/AddMemberModal/AddMemberModal'
 import EditWorkspaceModal from '../../Components/EditWorkspaceModal/EditWorkspaceModal'
 import DeleteWorkspaceModal from '../../Components/DeleteWorkspaceModal/DeleteWorkspaceModal'
+import EditChannelModal from '../../Components/EditChannelModal/EditChannelModal'
+import DeleteChannelModal from '../../Components/DeleteChannelModal/DeleteChannelModal'
 import Alert from '../../Components/Alert/Alert'
 import './WorkspaceScreen.css'
 
@@ -25,7 +28,9 @@ import './WorkspaceScreen.css'
 */
 export default function WorkspaceScreen() {
     const navigate = useNavigate()
-    const { channel_id } = useParams()
+    const { workspace_id, channel_id } = useParams()
+
+    const { reloadChannel } = useChannelContext()
 
     const {
         workspace_response,
@@ -41,13 +46,16 @@ export default function WorkspaceScreen() {
         members_loading,
         reloadMembers,
         is_owner,
-        can_create_channels
+        can_create_channels,
+        can_manage_channels
     } = useWorkspaceContext()
 
     const [create_channel_open, set_create_channel_open] = useState(false)
     const [add_member_open, set_add_member_open] = useState(false)
     const [edit_workspace_open, set_edit_workspace_open] = useState(false)
     const [delete_workspace_open, set_delete_workspace_open] = useState(false)
+    const [channel_to_edit, set_channel_to_edit] = useState(null)
+    const [channel_to_delete, set_channel_to_delete] = useState(null)
 
     // --- CASO 1: cargando ---
     if (workspace_loading) {
@@ -109,11 +117,14 @@ export default function WorkspaceScreen() {
                 members_error={members_error}
                 reloadMembers={reloadMembers}
                 can_create_channels={can_create_channels}
+                can_manage_channels={can_manage_channels}
                 is_owner={is_owner}
                 onOpenCreateChannel={() => set_create_channel_open(true)}
                 onOpenAddMember={() => set_add_member_open(true)}
                 onEdit={() => set_edit_workspace_open(true)}
                 onDelete={() => set_delete_workspace_open(true)}
+                onEditChannel={(channel) => set_channel_to_edit(channel)}
+                onDeleteChannel={(channel) => set_channel_to_delete(channel)}
             />
 
             <main className='workspace-content'>
@@ -163,6 +174,34 @@ export default function WorkspaceScreen() {
                     workspace={workspace}
                     onClose={() => set_delete_workspace_open(false)}
                     onDeleted={() => navigate('/home')}
+                />
+            }
+
+            {
+                channel_to_edit
+                && <EditChannelModal
+                    channel={channel_to_edit}
+                    onClose={() => set_channel_to_edit(null)}
+                    onSaved={() => {
+                        if (channel_to_edit._id === channel_id) {
+                            reloadChannel()
+                        }
+                        set_channel_to_edit(null)
+                    }}
+                />
+            }
+
+            {
+                channel_to_delete
+                && <DeleteChannelModal
+                    channel={channel_to_delete}
+                    onClose={() => set_channel_to_delete(null)}
+                    onDeleted={() => {
+                        if (channel_to_delete._id === channel_id) {
+                            navigate(`/workspace/${workspace_id}`)
+                        }
+                        set_channel_to_delete(null)
+                    }}
                 />
             }
         </div>

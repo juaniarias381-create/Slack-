@@ -1,5 +1,9 @@
 # Documentación de la API — Backend (Clon de Slack)
 
+- Backend (API): https://slack-backend-lac.vercel.app
+- Frontend (Web): https://slack-frontend-wine.vercel.app
+- Local: http://localhost:8080
+
 ## 1. Alcance del proyecto
 
 Este backend es una API REST construida con **Node.js + Express 5** que replica la funcionalidad central de Slack a nivel de aprendizaje. Su objetivo es exponer los endpoints necesarios para que un frontend gestione:
@@ -7,7 +11,7 @@ Este backend es una API REST construida con **Node.js + Express 5** que replica 
 - **Autenticación de usuarios**: registro, login (con JWT), verificación de email por mail, reenvío de verificación y recuperación/restablecimiento de contraseña.
 - **Usuarios**: consulta de usuarios y detalle por id.
 - **Espacios de trabajo (workspaces)**: creación, listado, detalle, actualización y eliminación, con un sistema de **membresías y roles** (`owner`, `admin`, `user`).
-- **Canales**: listado y creación de canales dentro de un workspace, detalle de canal y mensajes de canal (listar y enviar).
+- **Canales**: listado, creación, edición y eliminación de canales dentro de un workspace (con borrado en cascada de sus mensajes), detalle de canal y mensajes de canal (listar y enviar).
 
 ### Stack técnico
 
@@ -94,7 +98,7 @@ Estos middlewares se aplican a **todos** los endpoints de la API (se registran c
 | GET | `/api/workspaces/:workspace_id` | `authMiddleware` → `workspaceMiddleware([])` | Devuelve el detalle del workspace. Requiere ser miembro (cualquier rol). Responde `200` con `workspace_selected` |
 | GET | `/api/workspaces/:workspace_id/members` | `authMiddleware` → `workspaceMiddleware([])` | Devuelve la lista de miembros (nombre, email y rol) del workspace. Requiere ser miembro. Responde `200` con `data.members` |
 | POST | `/api/workspaces/:workspace_id/members` | `authMiddleware` → `workspaceMiddleware(['owner'])` | Agrega un miembro con `email` y `rol` (`admin`/`user`) en el body. Si el email no existe o está desactivado no crea nada, pero responde lo mismo (`200` y mensaje ambiguo) para no revelar el estado de la cuenta. |
-| PUT | `/api/workspaces/:workspace_id` | `authMiddleware` → `workspaceMiddleware(['owner', 'admin'])` | Actualiza `name`/`description` del workspace (body). Solo `owner` y `admin`. Responde `200` |
+| PUT | `/api/workspaces/:workspace_id` | `authMiddleware` → `workspaceMiddleware(['owner'])` | Actualiza `name`/`description` del workspace (body). Solo `owner` y `admin`. Responde `200` |
 | DELETE | `/api/workspaces/:workspace_id` | `authMiddleware` → `workspaceMiddleware(['owner'])` | Elimina el workspace y sus membresías. Solo `owner`. Responde `200` |
 
 > El router de canales se monta con `workspace_router.use('/:workspace_id/channels', channel_router)`, por lo que todas las rutas de canales requieren un `workspace_id` en la URL.
@@ -108,8 +112,12 @@ Router con `mergeParams: true` para acceder a `workspace_id`.
 | GET | `/api/workspaces/:workspace_id/channels` | `authMiddleware` → `workspaceMiddleware([])` | Devuelve todos los canales del workspace. Requiere ser miembro. Responde `200` con `data.channels` |
 | POST | `/api/workspaces/:workspace_id/channels` | `authMiddleware` → `workspaceMiddleware(['owner', 'admin'])` | Crea un canal con `name` y `description` (body). Valida que `name` exista y no supere 30 caracteres (`400`). Solo `owner` y `admin`. Responde `201` |
 | GET | `/api/workspaces/:workspace_id/channels/:channel_id` | `authMiddleware` → `workspaceMiddleware([])` → `channelMiddleware` | Devuelve el detalle del canal. Responde `200` con `data.channel` |
+| PUT | `/api/workspaces/:workspace_id/channels/:channel_id` | `authMiddleware` → `workspaceMiddleware(['owner', 'admin'])` → `channelMiddleware` | Actualiza `name`/`description` del canal (body). Solo `owner` y `admin`. Si no se manda `description`, se conserva la actual. Responde `200` con `data.channel_updated`; si el nombre ya existe en el workspace responde `409` |
+| DELETE | `/api/workspaces/:workspace_id/channels/:channel_id` | `authMiddleware` → `workspaceMiddleware(['owner', 'admin'])` → `channelMiddleware` | Elimina el canal y, en cascada, todos sus mensajes. Solo `owner` y `admin`. Responde `200` con `data.channel_deleted` |
 | GET | `/api/workspaces/:workspace_id/channels/:channel_id/messages` | `authMiddleware` → `workspaceMiddleware([])` → `channelMiddleware` | Devuelve los mensajes del canal. Responde `200` con `data.messages` |
 | POST | `/api/workspaces/:workspace_id/channels/:channel_id/messages` | `authMiddleware` → `workspaceMiddleware([])` → `channelMiddleware` | Envía un mensaje al canal: valida `content` (requerido, máximo 2000 caracteres, `400`), busca la membresía del usuario y crea el mensaje asociado a esa membresía y al canal. Responde `201` |
+
+> En PUT y DELETE, `channelMiddleware` garantiza que el canal exista y pertenezca al workspace de la URL (`404 "Canal no encontrado"` en caso contrario). El borrado elimina primero los mensajes del canal y después el canal, para no dejar documentos huérfanos. El chequeo de nombre duplicado del PUT excluye el propio canal, así que guardar sin cambiar el nombre no produce un `409`.
 
 ---
 
@@ -138,6 +146,7 @@ Todas las respuestas (exitosas y de error) siguen un formato uniforme:
 | 401 | Token JWT inválido o expirado |
 | 403 | El usuario no es miembro del workspace o no tiene el rol requerido |
 | 404 | Workspace, usuario o canal no encontrado (incluye canales de otro workspace) |
+| 409 | Conflicto: el recurso ya existe (canal con el mismo nombre en el workspace, usuario que ya es miembro)|
 | 500 | Error inesperado del servidor |
 | 503 | MongoDB no disponible al momento de la request |
 
@@ -151,3 +160,34 @@ Todas las respuestas (exitosas y de error) siguen un formato uniforme:
 4. `POST /api/workspaces` con header `Authorization: Bearer <token>` → crea un workspace (queda como `owner`).
 5. `POST /api/workspaces/:workspace_id/channels` → crea un canal (owner/admin).
 6. `POST /api/workspaces/:workspace_id/channels/:channel_id/messages` → envía mensajes al canal.
+
+---
+
+## 6. Postman
+
+La collection lista para importar está en [`postman/slack-clone.postman_collection.json`](postman/slack-clone.postman_collection.json) (formato **Collection v2.1**). Incluye los 22 endpoints agrupados en las carpetas Auth, Users, Workspaces, Members, Channels y Messages, con bodies de ejemplo, descripciones de roles y autenticación Bearer heredada de la collection (excepto en Auth, que es pública).
+
+### Importar
+
+1. Abrir Postman y hacer clic en **Import** (o `File > Import...`).
+2. Arrastrar `backend/postman/slack-clone.postman_collection.json` al diálogo o seleccionarlo desde el navegador de archivos.
+3. La collection aparece con el nombre **Slack Clone API**.
+
+### Configurar `base_url`
+
+La variable `base_url` define el destino de todas las requests. Por defecto es `http://localhost:8080` (puerto configurado en `.env.example` y `.env`).
+
+- **Local**: dejar `base_url = http://localhost:8080`.
+- **Deploy**: cambiar `base_url` a `https://slack-backend-lac.vercel.app`.
+
+Para cambiarla: clic derecho sobre la collection → **Edit** → pestaña **Variables** → editar el valor de `base_url` → **Save**. También se puede sobrescribir con un Environment propio.
+
+### Flujo recomendado
+
+1. `Auth > Register` y luego verificar el email con el token recibido por mail (`Auth > Verify email`, path variable `verify_email_token`).
+2. `Auth > Login`: su script de test guarda `data.auth_token` en la variable de collection `auth_token`, usada automáticamente por el resto de las requests como `Authorization: Bearer {{auth_token}}`. Las requests de Auth tienen la autenticación deshabilitada.
+3. `Workspaces > Create workspace`: su script guarda `data.workspace_created._id` en `workspace_id`.
+4. `Channels > Create channel`: su script guarda `data.channel_created._id` en `channel_id`.
+5. Con esas variables ya están listas las requests de Users, Workspaces, Members, Channels y Messages.
+
+Los ids de usuario y los tokens de verificación/reseteo se pasan como **path variables** editables en cada request, no como variables de collection.

@@ -40,11 +40,14 @@ export default function WorkspaceSidebar({
     members_error,
     reloadMembers,
     can_create_channels,
+    can_manage_channels,
     is_owner,
     onOpenCreateChannel,
     onOpenAddMember,
     onEdit,
-    onDelete
+    onDelete,
+    onEditChannel,
+    onDeleteChannel
 }) {
     const workspace_id = workspace?._id
     const [workspace_menu_open, set_workspace_menu_open] = useState(false)
@@ -224,22 +227,60 @@ export default function WorkspaceSidebar({
                             channels.map(
                                 (channel) => (
                                     <li key={channel._id}>
-                                        <NavLink
-                                            to={`/workspace/${workspace_id}/channel/${channel._id}`}
-                                            className={
-                                                ({ isActive }) => (
-                                                    'workspace-sidebar__channel'
-                                                    + (isActive ? ' workspace-sidebar__channel--active' : '')
-                                                )
+                                        <div className='workspace-sidebar__channel-row'>
+                                            <NavLink
+                                                to={`/workspace/${workspace_id}/channel/${channel._id}`}
+                                                className={
+                                                    ({ isActive }) => (
+                                                        'workspace-sidebar__channel'
+                                                        + (isActive ? ' workspace-sidebar__channel--active' : '')
+                                                    )
+                                                }
+                                            >
+                                                <span className='workspace-sidebar__hash' aria-hidden='true'>
+                                                    #
+                                                </span>
+                                                <span className='workspace-sidebar__channel-name'>
+                                                    {channel.nombre}
+                                                </span>
+                                            </NavLink>
+
+                                            {
+                                                can_manage_channels
+                                                &&
+                                                <>
+                                                    <button
+                                                        type='button'
+                                                        className='workspace-sidebar__channel-action'
+                                                        onClick={
+                                                            (event) => {
+                                                                event.preventDefault()
+                                                                onEditChannel(channel)
+                                                            }
+                                                        }
+                                                        aria-label={`Editar canal ${channel.nombre}`}
+                                                        title={`Editar canal ${channel.nombre}`}
+                                                    >
+                                                        <FaPenToSquare aria-hidden='true' />
+                                                    </button>
+
+                                                    <button
+                                                        type='button'
+                                                        className='workspace-sidebar__channel-action workspace-sidebar__channel-action--danger'
+                                                        onClick={
+                                                            (event) => {
+                                                                event.preventDefault()
+                                                                onDeleteChannel(channel)
+                                                            }
+                                                        }
+                                                        aria-label={`Eliminar canal ${channel.nombre}`}
+                                                        title={`Eliminar canal ${channel.nombre}`}
+                                                    >
+                                                        <FaTrashCan aria-hidden='true' />
+                                                    </button>
+                                                </>
                                             }
-                                        >
-                                            <span className='workspace-sidebar__hash' aria-hidden='true'>
-                                                #
-                                            </span>
-                                            <span className='workspace-sidebar__channel-name'>
-                                                {channel.nombre}
-                                            </span>
-                                        </NavLink>
+                                        </div>
                                     </li>
                                 )
                             )

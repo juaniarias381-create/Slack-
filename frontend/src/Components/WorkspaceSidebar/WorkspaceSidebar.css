@@ -223,10 +223,18 @@
   list-style: none;
 }
 
-.workspace-sidebar__channel {
+.workspace-sidebar__channel-row {
   display: flex;
   align-items: center;
+  gap: 2px;
+}
+
+.workspace-sidebar__channel {
+  display: flex;
+  flex: 1;
+  align-items: center;
   gap: 8px;
+  min-width: 0;
   padding: 7px 8px;
   font-size: 0.92rem;
   color: rgba(255, 255, 255, 0.78);
@@ -258,9 +266,43 @@
 }
 
 .workspace-sidebar__channel-name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.workspace-sidebar__channel-action {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+}
+
+.workspace-sidebar__channel-action:hover {
+  color: #FFFFFF;
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.workspace-sidebar__channel-action:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.4);
+  outline-offset: 1px;
+}
+
+.workspace-sidebar__channel-action--danger:hover {
+  color: #FFD1DC;
+  background-color: rgba(224, 30, 90, 0.22);
 }
 
 .workspace-sidebar__member {
@@ -375,5 +417,17 @@
     width: 100%;
     height: auto;
     max-height: 45vh;
+  }
+}
+
+@media (max-width: 360px) {
+  .workspace-sidebar__channel {
+    gap: 6px;
+    padding: 7px 6px;
+  }
+
+  .workspace-sidebar__channel-action {
+    width: 22px;
+    height: 22px;
   }
 }

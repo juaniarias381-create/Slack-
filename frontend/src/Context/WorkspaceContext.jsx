@@ -8,7 +8,11 @@ import {
     deleteWorkspace,
     updateWorkspace
 } from '../services/workspaceService'
-import { createChannel } from '../services/channelService'
+import {
+    createChannel,
+    updateChannel as updateChannelRequest,
+    deleteChannel as deleteChannelRequest
+} from '../services/channelService'
 
 /*
   WorkspaceContext
@@ -17,8 +21,9 @@ import { createChannel } from '../services/channelService'
   canales y miembros, y expone las acciones que pueden hacerlos cambiar.
 
   Analogia: los hooks son los sensores (lee el estado del mundo) y el Context
-  es el panel con los botones (crear canal, invitar, editar, borrar). Los
-  componentes solo miran el panel; no necesitan saber de fetch ni de tokens.
+  es el panel con los botones (crear/editar/borrar canal, invitar, editar y
+  borrar espacio). Los componentes solo miran el panel; no necesitan saber de
+  fetch ni de tokens.
 
   Despues de cada escritura se vuelve a pedir la lista correspondiente, asi
   la UI se actualiza sin recargar la pagina.
@@ -39,7 +44,10 @@ const defaultValue = {
     reloadMembers: () => {},
     is_owner: false,
     can_create_channels: false,
+    can_manage_channels: false,
     createChannel: () => {},
+    updateChannelInfo: () => {},
+    removeChannel: () => {},
     inviteMember: () => {},
     updateWorkspaceInfo: () => {},
     removeWorkspace: () => {}
@@ -57,8 +65,15 @@ export default function WorkspaceContextProvider({ children }) {
     const members = useMemberList(workspace_id)
 
     const my_role = workspace.workspace_response?.data?.my_role
+
+    /*
+    Regla unica para las acciones de canal: solo owner y admin.
+    El backend aplica la misma lista en workspaceMiddleware; aca apenas
+    ocultamos los botones, no validamos permisos.
+    */
+    const can_manage_channels = ['owner', 'admin'].includes(my_role)
+    const can_create_channels = can_manage_channels
     const is_owner = my_role === 'owner'
-    const can_create_channels = is_owner || my_role === 'admin'
 
     /*
     Las acciones NO manejan errores: si el service lanza, el useRequest del
@@ -67,6 +82,23 @@ export default function WorkspaceContextProvider({ children }) {
     */
     async function handleCreateChannel(name, description) {
         const result = await createChannel(workspace_id, name, description)
+        await channels.reloadChannels()
+        return result
+    }
+
+    async function handleUpdateChannelInfo(channel_id, name, description) {
+        const result = await updateChannelRequest(
+            workspace_id,
+            channel_id,
+            name,
+            description
+        )
+        await channels.reloadChannels()
+        return result
+    }
+
+    async function handleRemoveChannel(channel_id) {
+        const result = await deleteChannelRequest(workspace_id, channel_id)
         await channels.reloadChannels()
         return result
     }
@@ -107,8 +139,11 @@ export default function WorkspaceContextProvider({ children }) {
 
                 is_owner,
                 can_create_channels,
+                can_manage_channels: can_create_channels,
 
                 createChannel: handleCreateChannel,
+                updateChannelInfo: handleUpdateChannelInfo,
+                removeChannel: handleRemoveChannel,
                 inviteMember: handleInviteMember,
                 updateWorkspaceInfo: handleUpdateWorkspaceInfo,
                 removeWorkspace: handleRemoveWorkspace

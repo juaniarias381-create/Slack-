@@ -38,3 +38,22 @@ export async function sendMessage(workspace_id, channel_id, content) {
         }
     )
 }
+
+export async function updateChannel(workspace_id, channel_id, name, description) {
+    return await apiRequest(
+        `/api/workspaces/${workspace_id}/channels/${channel_id}`,
+        {
+            method: 'PUT',
+            body: { name, description }
+        }
+    )
+}
+
+export async function deleteChannel(workspace_id, channel_id) {
+    return await apiRequest(
+        `/api/workspaces/${workspace_id}/channels/${channel_id}`,
+        {
+            method: 'DELETE'
+        }
+    )
+}

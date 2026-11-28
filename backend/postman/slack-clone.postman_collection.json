@@ -1,0 +1,742 @@
+{
+  "info": {
+    "name": "Slack Clone API",
+    "description": "Collection v2.1 generada desde los routers de `backend` (auth, user, workspace y channels).\n\nFlujo sugerido: Register → Verify email → Login (guarda `auth_token`) → Create workspace (guarda `workspace_id`) → Create channel (guarda `channel_id`) → Send message.\n\nVariable `base_url`: `http://localhost:8080` para local o `https://slack-backend-lac.vercel.app` para el deploy. Las rutas de Auth deshabilitan la autenticación Bearer; el resto heredan `Authorization: Bearer {{auth_token}}` de la collection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "workspace_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "channel_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Endpoints públicos de autenticación. La autenticación Bearer de la collection está deshabilitada en cada request de esta carpeta.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registra un usuario con username, email y password y envía el mail de verificación. Público: no requiere autenticación ni rol.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"Ana\",\n  \"email\": \"ana@example.com\",\n  \"password\": \"miPassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión y devuelve el JWT; el test guarda data.auth_token en la variable auth_token. Público: no requiere autenticación ni rol.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@example.com\",\n  \"password\": \"miPassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "auth": {
+            "type": "noauth"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login correcto: guardar auth_token\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const token = pm.response.json().data.auth_token;",
+                  "    pm.expect(token).to.be.a(\"string\");",
+                  "    pm.collectionVariables.set(\"auth_token\", token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/verify-email/:verify_email_token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify-email",
+                ":verify_email_token"
+              ],
+              "variable": [
+                {
+                  "key": "verify_email_token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+              ]
+            },
+            "description": "Verifica el email consumiendo el token JWT recibido por mail (path variable verify_email_token). Público: no requiere autenticación ni rol."
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Resend verification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/verify-email/resend/:email",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify-email",
+                "resend",
+                ":email"
+              ],
+              "variable": [
+                {
+                  "key": "email",
+                  "value": "ana@example.com"
+                }
+              ]
+            },
+            "description": "Reenvía el mail de verificación con un token nuevo (path variable email). Público: no requiere autenticación ni rol."
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Forgot password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/forgot-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Envía el mail con el link para restablecer la contraseña. Público: no requiere autenticación ni rol.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Reset password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/reset-password/:reset_password_token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password",
+                ":reset_password_token"
+              ],
+              "variable": [
+                {
+                  "key": "reset_password_token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+              ]
+            },
+            "description": "Restablece la contraseña con el token del mail (path variable) y una nueva password de al menos 8 caracteres. Público: no requiere autenticación ni rol.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"nuevaPassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "Consulta de usuarios. Todas requieren el Bearer token de la collection.",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "Lista todos los usuarios de la plataforma. Requiere JWT válido; rol: cualquier usuario autenticado (no aplica rol de workspace)."
+          }
+        },
+        {
+          "name": "Get user by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/:user_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                ":user_id"
+              ],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "674a1b2c3d4e5f6a7b8c9d0e"
+                }
+              ]
+            },
+            "description": "Devuelve el detalle de un usuario por su id (path variable user_id). Requiere JWT válido; rol: cualquier usuario autenticado."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Workspaces",
+      "description": "Espacios de trabajo. El id se toma de la variable workspace_id, que se guarda automáticamente al crear un workspace.",
+      "item": [
+        {
+          "name": "List workspaces",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces"
+              ]
+            },
+            "description": "Lista los workspaces del usuario autenticado con el rol de membresía en cada uno. Requiere JWT válido; rol: cualquier usuario autenticado."
+          }
+        },
+        {
+          "name": "Create workspace",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces"
+              ]
+            },
+            "description": "Crea un workspace y asigna al usuario como owner; el test guarda data.workspace_created._id en workspace_id. Requiere JWT válido; rol: cualquier usuario autenticado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Equipo Frontend\",\n  \"description\": \"Workspace del equipo de frontend\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Workspace creado: guardar workspace_id\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const id = pm.response.json().data.workspace_created._id;",
+                  "    pm.expect(id).to.be.a(\"string\");",
+                  "    pm.collectionVariables.set(\"workspace_id\", id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get workspace by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}"
+              ]
+            },
+            "description": "Devuelve el detalle del workspace indicado por {{workspace_id}}. Requiere JWT válido; rol: cualquier miembro del workspace."
+          }
+        },
+        {
+          "name": "Update workspace",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}"
+              ]
+            },
+            "description": "Actualiza nombre y descripción del workspace indicado por {{workspace_id}}. Requiere JWT válido; rol: owner.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Equipo Frontend v2\",\n  \"description\": \"Nueva descripcion del workspace\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete workspace",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}"
+              ]
+            },
+            "description": "Elimina el workspace indicado por {{workspace_id}} y sus membresías. Requiere JWT válido; rol: owner."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Members",
+      "description": "Membresías de un workspace. Todas usan la variable workspace_id.",
+      "item": [
+        {
+          "name": "List members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}/members",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}",
+                "members"
+              ]
+            },
+            "description": "Lista nombre, email y rol de los miembros del workspace. Requiere JWT válido; rol: cualquier miembro del workspace."
+          }
+        },
+        {
+          "name": "Add member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}/members",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}",
+                "members"
+              ]
+            },
+            "description": "Agrega un miembro indicando email y rol (admin o user; nunca owner). Requiere JWT válido; rol: owner.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"luis@example.com\",\n  \"rol\": \"user\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Channels",
+      "description": "Canales de un workspace. El id se toma de la variable channel_id, que se guarda automáticamente al crear un canal.",
+      "item": [
+        {
+          "name": "List channels",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}/channels",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}",
+                "channels"
+              ]
+            },
+            "description": "Lista los canales del workspace. Requiere JWT válido; rol: cualquier miembro del workspace."
+          }
+        },
+        {
+          "name": "Create channel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}/channels",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}",
+                "channels"
+              ]
+            },
+            "description": "Crea un canal en el workspace; el test guarda data.channel_created._id en channel_id. Requiere JWT válido; rol: owner o admin.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"general\",\n  \"description\": \"Canal para anuncios generales\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Canal creado: guardar channel_id\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const id = pm.response.json().data.channel_created._id;",
+                  "    pm.expect(id).to.be.a(\"string\");",
+                  "    pm.collectionVariables.set(\"channel_id\", id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get channel by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}/channels/{{channel_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}",
+                "channels",
+                "{{channel_id}}"
+              ]
+            },
+            "description": "Devuelve el detalle de un canal del workspace. Requiere JWT válido; rol: cualquier miembro del workspace."
+          }
+        },
+        {
+          "name": "Update channel",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}/channels/{{channel_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}",
+                "channels",
+                "{{channel_id}}"
+              ]
+            },
+            "description": "Actualiza nombre y descripción del canal. Requiere JWT válido; rol: owner o admin.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"general-v2\",\n  \"description\": \"Canal para anuncios generales actualizados\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete channel",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}/channels/{{channel_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}",
+                "channels",
+                "{{channel_id}}"
+              ]
+            },
+            "description": "Elimina el canal y, en cascada, todos sus mensajes. Requiere JWT válido; rol: owner o admin."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "description": "Mensajes de un canal. Usan workspace_id y channel_id.",
+      "item": [
+        {
+          "name": "List messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}/channels/{{channel_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}",
+                "channels",
+                "{{channel_id}}",
+                "messages"
+              ]
+            },
+            "description": "Lista los mensajes del canal ordenados por fecha de creación. Requiere JWT válido; rol: cualquier miembro del workspace."
+          }
+        },
+        {
+          "name": "Send message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/workspaces/{{workspace_id}}/channels/{{channel_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspace_id}}",
+                "channels",
+                "{{channel_id}}",
+                "messages"
+              ]
+            },
+            "description": "Envía un mensaje al canal; content es requerido y admite hasta 2000 caracteres. Requiere JWT válido; rol: cualquier miembro del workspace.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hola equipo, este es el primer mensaje\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

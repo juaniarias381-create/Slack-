@@ -19,9 +19,39 @@
 }
 
 .home-header__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 1.25rem;
   font-weight: 800;
   line-height: 1.2;
+}
+
+/* El boton se queda pegado a la derecha y nunca se comprime */
+.home-header__logout {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+.home-header__logout:hover {
+  background-color: rgba(255, 255, 255, 0.14);
+  border-color: #FFFFFF;
+}
+
+.home-header__logout:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.45);
+  outline-offset: 2px;
 }
 
 /* Contenedor de la tarjeta: se superpone a la banda con margen negativo */
@@ -45,5 +75,21 @@
 
   .home-main {
     margin-top: -36px;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-header {
+    gap: 8px;
+    padding: 14px 14px 52px;
+  }
+
+  .home-header__title {
+    font-size: 1.1rem;
+  }
+
+  .home-header__logout {
+    padding: 7px 9px;
+    font-size: 0.8rem;
   }
 }
